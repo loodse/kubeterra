@@ -18,21 +18,48 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
-
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // TerraformResourceSpec defines the desired state of TerraformResource
 type TerraformResourceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Type       string                `json:"type"`
+	Parameters *runtime.RawExtension `json:"parameters"`
 }
 
 // TerraformResourceStatus defines the observed state of TerraformResource
 type TerraformResourceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Conditions []TerraformResourceCondition `json:"conditions,omitempty"`
+}
+
+// TerraformResourceConditionType represents a condition type.
+type TerraformResourceConditionType string
+
+const (
+	// TerraformResourceConditionReady represents that a given TerraformResourceCondition is in
+	// ready state.
+	TerraformResourceConditionReady TerraformResourceConditionType = "Ready"
+)
+
+// TerraformResourceCondition contains condition information for a TerraformResource.
+type TerraformResourceCondition struct {
+	// Type of the condition
+	Type TerraformResourceConditionType `json:"type"`
+
+	// Status of the condition, one of ('True', 'False', 'Unknown').
+	Status ConditionStatus `json:"status"`
+
+	// LastTransitionTime is the timestamp corresponding to the last status
+	// change of this condition.
+	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
+
+	// Reason is a brief machine readable explanation for the condition's last
+	// transition.
+	Reason string `json:"reason"`
+
+	// Message is a human readable description of the details of the last
+	// transition, complementing reason.
+	Message string `json:"message"`
 }
 
 // +genclient
@@ -40,6 +67,9 @@ type TerraformResourceStatus struct {
 
 // TerraformResource is the Schema for the terraformresources API
 // +k8s:openapi-gen=true
+// +kubebuilder:printcolumn:name="Module",type="string",JSONPath=".spec.module"
+// +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".spec.type"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type TerraformResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

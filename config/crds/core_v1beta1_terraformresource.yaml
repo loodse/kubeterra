@@ -6,6 +6,16 @@ metadata:
     controller-tools.k8s.io: "1.0"
   name: terraformresources.core.kubeterra.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.module
+    name: Module
+    type: string
+  - JSONPath: .spec.type
+    name: Type
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
   group: core.kubeterra.io
   names:
     kind: TerraformResource
@@ -27,8 +37,48 @@ spec:
         metadata:
           type: object
         spec:
+          properties:
+            parameters:
+              type: object
+            type:
+              type: string
+          required:
+          - type
+          - parameters
           type: object
         status:
+          properties:
+            conditions:
+              items:
+                properties:
+                  lastTransitionTime:
+                    description: LastTransitionTime is the timestamp corresponding
+                      to the last status change of this condition.
+                    format: date-time
+                    type: string
+                  message:
+                    description: Message is a human readable description of the details
+                      of the last transition, complementing reason.
+                    type: string
+                  reason:
+                    description: Reason is a brief machine readable explanation for
+                      the condition's last transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of ('True', 'False',
+                      'Unknown').
+                    type: string
+                  type:
+                    description: Type of the condition
+                    type: string
+                required:
+                - type
+                - status
+                - lastTransitionTime
+                - reason
+                - message
+                type: object
+              type: array
           type: object
   version: v1beta1
 status:

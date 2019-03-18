@@ -18,21 +18,54 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
-
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // TerraformModuleSpec defines the desired state of TerraformModule
 type TerraformModuleSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	ProviderSelector *metav1.LabelSelector `json:"providerSelector"`
+	ResourceSelector *metav1.LabelSelector `json:"resourceSelector"`
 }
 
 // TerraformModuleStatus defines the observed state of TerraformModule
 type TerraformModuleStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Conditions     []TerraformModuleCondition `json:"conditions,omitempty"`
+	CurrentHash    string                     `json:"currentHash"`
+	TerraformState *runtime.RawExtension      `json:"terraformState,omitempty"`
+}
+
+// TerraformModuleConditionType represents a condition type.
+type TerraformModuleConditionType string
+
+const (
+	// TerraformModuleConditionReady represents that a given TerraformModuleCondition is in
+	// ready state.
+	TerraformModuleConditionReady TerraformModuleConditionType = "Ready"
+
+	// TerraformModuleConditionFailed represents information about a final failure
+	// that should not be retried.
+	TerraformModuleConditionFailed TerraformModuleConditionType = "Failed"
+)
+
+// TerraformModuleCondition contains condition information for a TerraformModule.
+type TerraformModuleCondition struct {
+	// Type of the condition
+	Type TerraformModuleConditionType `json:"type"`
+
+	// Status of the condition, one of ('True', 'False', 'Unknown').
+	Status ConditionStatus `json:"status"`
+
+	// LastTransitionTime is the timestamp corresponding to the last status
+	// change of this condition.
+	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
+
+	// Reason is a brief machine readable explanation for the condition's last
+	// transition.
+	Reason string `json:"reason"`
+
+	// Message is a human readable description of the details of the last
+	// transition, complementing reason.
+	Message string `json:"message"`
 }
 
 // +genclient
@@ -40,6 +73,7 @@ type TerraformModuleStatus struct {
 
 // TerraformModule is the Schema for the terraformmodules API
 // +k8s:openapi-gen=true
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type TerraformModule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -2,8 +2,9 @@ apiVersion: core.kubeterra.io/v1beta1
 kind: TerraformProvider
 metadata:
   labels:
-    controller-tools.k8s.io: "1.0"
-  name: terraformprovider-sample
+    setup: sample
+  name: hcloud-provider-sample
 spec:
-  # Add fields here
-  foo: bar
+  provider: hcloud
+  parameters:
+    token: <HETZNER_CLOUD_TOKEN>

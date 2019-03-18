@@ -1,9 +1,11 @@
 apiVersion: core.kubeterra.io/v1beta1
 kind: TerraformModule
 metadata:
-  labels:
-    controller-tools.k8s.io: "1.0"
-  name: terraformmodule-sample
+  name: sample
 spec:
-  # Add fields here
-  foo: bar
+  providerSelector:
+    matchLabels:
+      setup: sample
+  resourceSelector:
+    matchLabels:
+      setup: sample

@@ -2,8 +2,11 @@ apiVersion: core.kubeterra.io/v1beta1
 kind: TerraformResource
 metadata:
   labels:
-    controller-tools.k8s.io: "1.0"
-  name: terraformresource-sample
+    setup: sample
+  name: terraform-server-sample
 spec:
-  # Add fields here
-  foo: bar
+  type: hcloud_server
+  parameters:
+    name: kubeterra-node1
+    image: debian-9
+    server_type: cx11
