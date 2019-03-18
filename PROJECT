@@ -1,0 +1,3 @@
+version: "1"
+domain: kubeterra.io
+repo: github.com/kubermatic/kubeterra
