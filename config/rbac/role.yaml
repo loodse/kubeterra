@@ -1,0 +1,68 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
+  - terraformconfigurations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
+  - terraformconfigurations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
+  - terraformplans
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
+  - terraformplans/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
+  - terraformstates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
+  - terraformstates/status
+  verbs:
+  - get
+  - patch
+  - update
