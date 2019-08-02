@@ -19,13 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func init() {
-	SchemeBuilder.Register(&TerraformPlan{}, &TerraformPlanList{})
-}
-
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // TerraformPlanSpec defines the desired state of TerraformPlan
 type TerraformPlanSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -59,4 +52,8 @@ type TerraformPlanList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []TerraformPlan `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&TerraformPlan{}, &TerraformPlanList{})
 }
