@@ -1,0 +1,25 @@
+run:
+  issues-exit-code: 1
+  skip-dirs:
+  - hack
+  skip-files:
+  - zz_generated.deepcopy.go
+  modules-download-mode: readonly
+
+linters:
+  enable-all: true
+  disable:
+  - gochecknoglobals
+  - gochecknoinits
+  - lll
+  - maligned
+  - prealloc
+
+linters-settings:
+  linters-settings:
+    check-type-assertions: true
+    check-blank: true
+  govet:
+    check-shadowing: true
+  goimports:
+    local-prefixes: github.com/kubermatic/kubeterra

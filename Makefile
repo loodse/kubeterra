@@ -22,7 +22,9 @@ test: generate manifests
 	go test ./api/... ./controllers/... -coverprofile cover.out
 
 # Build manager binary
-manager: generate
+manager: generate build
+
+build:
 	go build -v -o bin/manager main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
