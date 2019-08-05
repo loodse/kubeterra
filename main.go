@@ -21,6 +21,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	corev1typed "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -62,6 +63,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	restConfig := mgr.GetConfig()
+	coreV1Client, err := corev1typed.NewForConfig(restConfig)
+	if err != nil {
+		setupLog.Error(err, "unable to init client", "client", "corev1typed")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.TerraformStateReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("TerraformState"),
@@ -78,9 +86,10 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.TerraformConfigurationReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("TerraformConfiguration"),
-		Scheme: mgr.GetScheme(),
+		Client:    mgr.GetClient(),
+		Log:       ctrl.Log.WithName("controllers").WithName("TerraformConfiguration"),
+		Scheme:    mgr.GetScheme(),
+		PodClient: coreV1Client,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TerraformConfiguration")
 		os.Exit(1)
