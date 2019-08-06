@@ -7,6 +7,30 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/logs
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
+- apiGroups:
   - terraform.kubeterra.io
   resources:
   - terraformconfigurations
@@ -42,26 +66,6 @@ rules:
   - terraform.kubeterra.io
   resources:
   - terraformplans/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - terraform.kubeterra.io
-  resources:
-  - terraformstates
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - terraform.kubeterra.io
-  resources:
-  - terraformstates/status
   verbs:
   - get
   - patch
