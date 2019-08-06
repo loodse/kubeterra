@@ -70,13 +70,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.TerraformStateReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("TerraformState"),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "TerraformState")
-		os.Exit(1)
-	}
 	if err = (&controllers.TerraformPlanReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("TerraformPlan"),
