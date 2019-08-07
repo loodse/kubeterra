@@ -23,7 +23,7 @@ import (
 
 // TerraformConfigurationSpec defines the desired state of TerraformConfiguration
 type TerraformConfigurationSpec struct {
-	// Indicates that the terraform apply should not happend.
+	// Indicates that the terraform apply should not happened.
 	// +optional
 	Paused bool `json:"paused,omitempty"`
 
