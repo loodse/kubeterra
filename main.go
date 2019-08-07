@@ -69,7 +69,7 @@ func main() {
 	restConfig := mgr.GetConfig()
 	coreV1Client, err := corev1typed.NewForConfig(restConfig)
 	if err != nil {
-		setupLog.Error(err, "unable to init client", "client", "corev1typed")
+		setupLog.Error(err, "unable to init corev1 client", "client", "corev1typed")
 		os.Exit(1)
 	}
 
@@ -81,6 +81,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "TerraformPlan")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.TerraformConfigurationReconciler{
 		Client:    mgr.GetClient(),
 		Log:       ctrl.Log.WithName("controllers").WithName("TerraformConfiguration"),
@@ -90,6 +91,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "TerraformConfiguration")
 		os.Exit(1)
 	}
+
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")

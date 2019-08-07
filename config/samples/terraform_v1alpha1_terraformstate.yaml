@@ -1,7 +1,0 @@
-apiVersion: terraform.kubeterra.io/v1alpha1
-kind: TerraformState
-metadata:
-  name: terraformstate-sample
-spec:
-  # Add fields here
-  foo: bar

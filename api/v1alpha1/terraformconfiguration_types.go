@@ -23,17 +23,70 @@ import (
 
 // TerraformConfigurationSpec defines the desired state of TerraformConfiguration
 type TerraformConfigurationSpec struct {
+	// Indicates that the terraform apply should not happend.
+	// +optional
+	Paused bool `json:"paused,omitempty"`
+
+	// Indicates that the terrafor apply should happen without any further question.
+	// +optional
+	AutoApprove bool `json:"autoApprove,omitempty"`
+
 	// Configuration holds whole terraform configuration definition
 	Configuration string `json:"configuration"`
 
-	// Indicates that the deployment is paused.
+	// Variable values, will be dumped to terraform.tfvars
 	// +optional
-	Paused bool `json:"paused,omitempty"`
+	Values string `json:"values"`
+
+	// Defines some aspects of resulting Pod that will run terraform plan / teterraform apply
+	// +optional
+	Template *TerraformConfigurationTemplate `json:"template,omitempty"`
+}
+
+// TerraformConfigurationTemplate defines some aspects of resulting Pod that will run terraform plan / teterraform apply
+type TerraformConfigurationTemplate struct {
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// List of volumes that can be mounted by containers belonging to the pod.
+	// More info: https://kubernetes.io/docs/concepts/storage/volumes
+	// Standard corev1 kubernetes API
+	// +optional
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
+
+	// List of sources to populate environment variables in the container.
+	// The keys defined within a source must be a C_IDENTIFIER. All invalid keys
+	// will be reported as an event when the container is starting. When a key exists in multiple
+	// sources, the value associated with the last source will take precedence.
+	// Values defined by an Env with a duplicate key will take precedence.
+	// Standard corev1 kubernetes API
+	// +optional
+	EnvFrom []corev1.EnvFromSource `json:"envFrom,omitempty"`
+
+	// List of environment variables to set in the container.
+	// Standard corev1 kubernetes API
+	// +optional
+	Env []corev1.EnvVar `json:"env,omitempty"`
+
+	// Pod volumes to mount into the container's filesystem.
+	// Standard corev1 kubernetes API
+	// +optional
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+
+	// ServiceAccountName is the name of the ServiceAccount to use to run this pod.
+	// More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+	// Standard corev1 kubernetes API
+	// +optional
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
 
 // TerraformConfigurationStatus defines the observed state of TerraformConfiguration
 type TerraformConfigurationStatus struct {
-	Outputs runtime.RawExtension `json:"outputs"`
+	// Terraform State JSON object
+	// +optional
+	State runtime.RawExtension `json:"state"`
 
 	// A list of pointers to currently running jobs.
 	// +optional
@@ -46,7 +99,7 @@ type TerraformConfigurationStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=tfconfig
+// +kubebuilder:resource:shortName=tfconfig;tfconfigs
 
 // TerraformConfiguration is the Schema for the terraformconfigurations API
 type TerraformConfiguration struct {
