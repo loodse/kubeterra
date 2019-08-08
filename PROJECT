@@ -4,9 +4,6 @@ repo: github.com/kubermatic/kubeterra
 resources:
 - group: terraform
   version: v1alpha1
-  kind: TerraformState
-- group: terraform
-  version: v1alpha1
   kind: TerraformPlan
 - group: terraform
   version: v1alpha1
