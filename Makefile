@@ -35,7 +35,7 @@ deploy: manifests ## Deploy controller in the configured Kubernetes cluster in ~
 	kustomize build config/default | kubectl apply -f -
 
 manifests: controller-gen ## Generate manifests e.g. CRD, RBAC etc.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=kubeterra webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 lint: ## Run golangci-lint against code
 	golangci-lint run
