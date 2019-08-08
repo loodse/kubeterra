@@ -8,6 +8,14 @@ spec:
       labels:
         trigger: me
 
+    envFrom:
+    - secretRef:
+        name: "cloud-credentials"
+
+    env:
+    - name: TF_VAR_server_type
+      value: cx11
+
     volumes:
     - name: sshsecrets
       secret:
