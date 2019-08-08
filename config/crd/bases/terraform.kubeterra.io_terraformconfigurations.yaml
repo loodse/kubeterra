@@ -6,6 +6,11 @@ metadata:
   creationTimestamp: null
   name: terraformconfigurations.terraform.kubeterra.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.lastApplyTime
+    format: date-time
+    name: Last Apply Time
+    type: string
   group: terraform.kubeterra.io
   names:
     kind: TerraformConfiguration

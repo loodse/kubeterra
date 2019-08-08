@@ -1,7 +1,0 @@
-apiVersion: terraform.kubeterra.io/v1alpha1
-kind: TerraformPlan
-metadata:
-  name: terraformplan-sample
-spec:
-  # Add fields here
-  foo: bar

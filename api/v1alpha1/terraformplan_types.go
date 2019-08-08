@@ -19,22 +19,41 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// TerraformPlanPhase phase
+// +kubebuilder:validation:Enum=Scheduled;Running;Done;Failed
+type TerraformPlanPhase string
+
+// TerraformPlanPhase ENUM
+const (
+	TerraformPlanPhaseScheduled TerraformPlanPhase = "Scheduled"
+	TerraformPlanPhaseRunning   TerraformPlanPhase = "Running"
+	TerraformPlanPhaseDone      TerraformPlanPhase = "Done"
+	TerraformPlanPhaseFailed    TerraformPlanPhase = "Failed"
+)
+
 // TerraformPlanSpec defines the desired state of TerraformPlan
 type TerraformPlanSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // TerraformPlanStatus defines the observed state of TerraformPlan
 type TerraformPlanStatus struct {
-	Approved bool `json:"approved"`
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Phase indicates current phase of the terraform action.
+	// Is a enum Scheduled;Running;Done;Failed
+	Phase TerraformPlanPhase `json:"phase"`
+
+	// Contain logs output
+	// +optional
+	Logs string `json:"logs"`
+
+	// Base64 encoded contents of the `terraform plan -out`
+	// +optional
+	GeneratedPlan []byte `json:"generatedPlan,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=tfplan
+// +kubebuilder:resource:shortName=tfplan;tfplans
+// +kubebuilder:printcolumn:name=Phase,type=string,JSONPath=`.status.phase`
 
 // TerraformPlan is the Schema for the terraformplans API
 type TerraformPlan struct {

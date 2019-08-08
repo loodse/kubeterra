@@ -6,12 +6,17 @@ metadata:
   creationTimestamp: null
   name: terraformplans.terraform.kubeterra.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.phase
+    name: Phase
+    type: string
   group: terraform.kubeterra.io
   names:
     kind: TerraformPlan
     plural: terraformplans
     shortNames:
     - tfplan
+    - tfplans
   scope: Namespaced
   subresources:
     status: {}
@@ -37,10 +42,24 @@ spec:
         status:
           description: TerraformPlanStatus defines the observed state of TerraformPlan
           properties:
-            approved:
-              type: boolean
+            generatedPlan:
+              description: Base64 encoded contents of the `terraform plan -out`
+              format: byte
+              type: string
+            logs:
+              description: Contain logs output
+              type: string
+            phase:
+              description: Phase indicates current phase of the terraform action.
+                Is a enum Scheduled;Running;Done;Failed
+              enum:
+              - Scheduled
+              - Running
+              - Done
+              - Failed
+              type: string
           required:
-          - approved
+          - phase
           type: object
       type: object
   version: v1alpha1

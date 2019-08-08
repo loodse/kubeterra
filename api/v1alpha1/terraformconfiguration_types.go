@@ -100,6 +100,7 @@ type TerraformConfigurationStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=tfconfig;tfconfigs
+// +kubebuilder:printcolumn:name="Last Apply Time",type=string,format=date-time,JSONPath=`.status.lastApplyTime`
 
 // TerraformConfiguration is the Schema for the terraformconfigurations API
 type TerraformConfiguration struct {
