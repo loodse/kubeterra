@@ -4,6 +4,7 @@
 resources:
 - bases/terraform.kubeterra.io_terraformplans.yaml
 - bases/terraform.kubeterra.io_terraformconfigurations.yaml
+- bases/terraform.kubeterra.io_terraformstates.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 # patches:

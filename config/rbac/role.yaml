@@ -70,3 +70,23 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
+  - terraformstates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
+  - terraformstates/status
+  verbs:
+  - get
+  - patch
+  - update

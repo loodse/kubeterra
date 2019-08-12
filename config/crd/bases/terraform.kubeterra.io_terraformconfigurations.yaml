@@ -7,9 +7,8 @@ metadata:
   name: terraformconfigurations.terraform.kubeterra.io
 spec:
   additionalPrinterColumns:
-  - JSONPath: .status.lastApplyTime
-    format: date-time
-    name: Last Apply Time
+  - JSONPath: .status.phase
+    name: Phase
     type: string
   group: terraform.kubeterra.io
   names:
@@ -202,7 +201,7 @@ spec:
                   type: object
                 serviceAccountName:
                   description: 'ServiceAccountName is the name of the ServiceAccount
-                    to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+                    to use in running terraform pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
                     Standard corev1 kubernetes API'
                   type: string
                 volumeMounts:
@@ -1514,14 +1513,18 @@ spec:
                     type: string
                 type: object
               type: array
-            lastApplyTime:
-              description: Information when was the last time the job was successfully
-                scheduled.
-              format: date-time
+            phase:
+              description: Phase indicates current phase of the terraform action.
+                Is a enum PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
+              enum:
+              - PlanRunning
+              - WaitingConfirmation
+              - ApplyRunning
+              - Done
+              - Fail
               type: string
-            state:
-              description: Terraform State JSON object
-              type: object
+          required:
+          - phase
           type: object
       type: object
   version: v1alpha1

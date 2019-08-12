@@ -19,6 +19,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,5 +51,6 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 func (r *TerraformPlanReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&terraformv1alpha1.TerraformPlan{}).
+		Owns(&corev1.Pod{}).
 		Complete(r)
 }
