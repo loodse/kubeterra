@@ -35,6 +35,9 @@ spec:
         spec:
           description: TerraformPlanSpec defines the desired state of TerraformPlan
           properties:
+            approved:
+              description: Indicate if plan approved to apply
+              type: boolean
             configuration:
               description: Configuration holds whole terraform configuration definition
               type: string
@@ -1455,6 +1458,7 @@ spec:
               description: Variable values, will be dumped to terraform.tfvars
               type: string
           required:
+          - approved
           - configuration
           type: object
         status:

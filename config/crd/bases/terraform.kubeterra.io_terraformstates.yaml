@@ -10,7 +10,12 @@ spec:
   names:
     kind: TerraformState
     plural: terraformstates
-  scope: ""
+    shortNames:
+    - tfstate
+    - tfstates
+  scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: TerraformState is the Schema for the terraformstates API
@@ -32,7 +37,8 @@ spec:
           properties:
             state:
               description: Terraform State JSON object
-              type: object
+              format: byte
+              type: string
           type: object
         status:
           description: TerraformStateStatus defines the observed state of TerraformState

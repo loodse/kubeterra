@@ -16,9 +16,10 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // TerraformConfigurationTemplate defines some aspects of resulting Pod that will run terraform plan / teterraform apply
@@ -97,10 +98,6 @@ type TerraformConfigurationSpec struct {
 
 // TerraformConfigurationStatus defines the observed state of TerraformConfiguration
 type TerraformConfigurationStatus struct {
-	// A list of pointers to currently running jobs.
-	// +optional
-	Active []corev1.ObjectReference `json:"active,omitempty"`
-
 	// Phase indicates current phase of the terraform action.
 	// Is a enum PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
 	Phase TerraformPhase `json:"phase"`
@@ -108,6 +105,9 @@ type TerraformConfigurationStatus struct {
 
 // TerraformPlanSpec defines the desired state of TerraformPlan
 type TerraformPlanSpec struct {
+	// Indicate if plan approved to apply
+	Approved bool `json:"approved"`
+
 	// Configuration holds whole terraform configuration definition
 	Configuration string `json:"configuration"`
 
@@ -184,7 +184,7 @@ type TerraformPlanList struct {
 type TerraformStateSpec struct {
 	// Terraform State JSON object
 	// +optional
-	State runtime.RawExtension `json:"state,omitempty"`
+	State json.RawMessage `json:"state,omitempty"`
 }
 
 // TerraformStateStatus defines the observed state of TerraformState
@@ -192,6 +192,8 @@ type TerraformStateStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName=tfstate;tfstates
 
 // TerraformState is the Schema for the terraformstates API
 type TerraformState struct {
