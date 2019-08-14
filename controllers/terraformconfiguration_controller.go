@@ -19,7 +19,6 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	corev1typed "k8s.io/client-go/kubernetes/typed/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,9 +39,6 @@ type TerraformConfigurationReconciler struct {
 // +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformconfigurations/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformstates,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformstates/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=pods/status,verbs=get
-// +kubebuilder:rbac:groups=core,resources=pods/logs,verbs=get
 
 // Reconcile state
 func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
@@ -57,6 +53,6 @@ func (r *TerraformConfigurationReconciler) SetupWithManager(mgr ctrl.Manager) er
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&terraformv1alpha1.TerraformConfiguration{}).
 		Owns(&terraformv1alpha1.TerraformPlan{}).
-		Owns(&corev1.Pod{}).
+		Owns(&terraformv1alpha1.TerraformState{}).
 		Complete(r)
 }
