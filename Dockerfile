@@ -16,5 +16,5 @@ RUN make build
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:latest
 WORKDIR /
-COPY --from=builder /workspace/bin/manager .
-ENTRYPOINT ["/manager"]
+COPY --from=builder /workspace/bin/kubeterra .
+ENTRYPOINT ["/kubeterra"]
