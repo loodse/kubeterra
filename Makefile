@@ -22,10 +22,13 @@ test: generate manifests ## Run tests
 manager: generate build ## Generate code, build manager binary
 
 build: ## Build manager binary
-	go build -v -o bin/kubeterra ./cmd/kubeterra
+	go build -ldflags '-s -w' -v -o bin/kubeterra ./cmd/kubeterra
 
-run: generate build ## Run against the configured Kubernetes cluster in ~/.kube/config
-	./bin/kubeterra
+pack:
+	upx ./bin/*
+
+run: generate ## Run against the configured Kubernetes cluster in ~/.kube/config
+	go run ./cmd/kubeterra/*.go
 
 install: manifests ## Install CRDs into a cluster
 	kubectl apply -f config/crd/bases
