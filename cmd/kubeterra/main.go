@@ -74,19 +74,19 @@ func main() {
 	}
 
 	if err = (&controllers.TerraformPlanReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("TerraformPlan"),
-		Scheme: mgr.GetScheme(),
+		Client:    mgr.GetClient(),
+		Log:       ctrl.Log.WithName("controllers").WithName("TerraformPlan"),
+		Scheme:    mgr.GetScheme(),
+		PodClient: coreV1Client,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TerraformPlan")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.TerraformConfigurationReconciler{
-		Client:    mgr.GetClient(),
-		Log:       ctrl.Log.WithName("controllers").WithName("TerraformConfiguration"),
-		Scheme:    mgr.GetScheme(),
-		PodClient: coreV1Client,
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("TerraformConfiguration"),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TerraformConfiguration")
 		os.Exit(1)

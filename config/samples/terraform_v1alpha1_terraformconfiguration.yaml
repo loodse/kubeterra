@@ -4,10 +4,6 @@ metadata:
   name: hetzner-sample
 spec:
   template:
-    metadata:
-      labels:
-        trigger: me
-
     envFrom:
     - secretRef:
         name: "cloud-credentials"

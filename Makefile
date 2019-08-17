@@ -55,7 +55,7 @@ docker-build: ## Build the docker image
 
 controller-gen: ## Install controller-gen binary
 ifeq (, $(shell which controller-gen))
-	go install sigs.k8s.io/controller-tools/cmd/controller-gen
+	go install -v sigs.k8s.io/controller-tools/cmd/controller-gen
 CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)

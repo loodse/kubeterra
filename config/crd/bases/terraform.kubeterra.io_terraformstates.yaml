@@ -37,8 +37,7 @@ spec:
           properties:
             state:
               description: Terraform State JSON object
-              format: byte
-              type: string
+              type: object
           type: object
         status:
           description: TerraformStateStatus defines the observed state of TerraformState

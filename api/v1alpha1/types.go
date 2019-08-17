@@ -16,19 +16,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"encoding/json"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // TerraformConfigurationTemplate defines some aspects of resulting Pod that will run terraform plan / teterraform apply
 type TerraformConfigurationTemplate struct {
-	// Standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
 	// List of volumes that can be mounted by containers belonging to the pod.
 	// More info: https://kubernetes.io/docs/concepts/storage/volumes
 	// Standard corev1 kubernetes API
@@ -62,16 +56,17 @@ type TerraformConfigurationTemplate struct {
 }
 
 // TerraformPhase phase
-// +kubebuilder:validation:Enum=PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
+// +kubebuilder:validation:Enum=PlanScheduled;PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
 type TerraformPhase string
 
 // TerraformPhase ENUM
 const (
-	TerraformConfigurationPhasePlanRunning         TerraformPhase = "PlanRunning"
-	TerraformConfigurationPhaseWaitingConfirmation TerraformPhase = "WaitingConfirmation"
-	TerraformConfigurationPhaseApplyRunning        TerraformPhase = "ApplyRunning"
-	TerraformConfigurationPhaseDone                TerraformPhase = "Done"
-	TerraformConfigurationPhaseFail                TerraformPhase = "Fail"
+	TerraformPhasePlanScheduled       TerraformPhase = "PlanScheduled"
+	TerraformPhasePlanRunning         TerraformPhase = "PlanRunning"
+	TerraformPhaseWaitingConfirmation TerraformPhase = "WaitingConfirmation"
+	TerraformPhaseApplyRunning        TerraformPhase = "ApplyRunning"
+	TerraformPhaseDone                TerraformPhase = "Done"
+	TerraformPhaseFail                TerraformPhase = "Fail"
 )
 
 // TerraformConfigurationSpec defines the desired state of TerraformConfiguration
@@ -99,7 +94,7 @@ type TerraformConfigurationSpec struct {
 // TerraformConfigurationStatus defines the observed state of TerraformConfiguration
 type TerraformConfigurationStatus struct {
 	// Phase indicates current phase of the terraform action.
-	// Is a enum PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
+	// Is a enum PlanScheduled;PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
 	Phase TerraformPhase `json:"phase"`
 }
 
@@ -131,7 +126,7 @@ type TerraformPlanStatus struct {
 	GeneratedPlan []byte `json:"generatedPlan,omitempty"`
 
 	// Phase indicates current phase of the terraform action.
-	// Is a enum PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
+	// Is a enum PlanScheduled;PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
 	Phase TerraformPhase `json:"phase"`
 }
 
@@ -161,6 +156,8 @@ type TerraformConfigurationList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=tfplan;tfplans
+// +kubebuilder:printcolumn:name="Approved",type=string,JSONPath=`.spec.approved`
+// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 
 // TerraformPlan is the Schema for the terraformplans API
 type TerraformPlan struct {
@@ -184,7 +181,7 @@ type TerraformPlanList struct {
 type TerraformStateSpec struct {
 	// Terraform State JSON object
 	// +optional
-	State json.RawMessage `json:"state,omitempty"`
+	State *runtime.RawExtension `json:"state,omitempty"`
 }
 
 // TerraformStateStatus defines the observed state of TerraformState

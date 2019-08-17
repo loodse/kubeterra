@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/go-logr/logr v0.1.0
+	github.com/hashicorp/go-uuid v1.0.1
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/onsi/ginkgo v1.8.0

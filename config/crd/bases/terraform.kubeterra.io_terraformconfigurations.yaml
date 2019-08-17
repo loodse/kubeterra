@@ -196,9 +196,6 @@ spec:
                         type: object
                     type: object
                   type: array
-                metadata:
-                  description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
-                  type: object
                 serviceAccountName:
                   description: 'ServiceAccountName is the name of the ServiceAccount
                     to use in running terraform pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -1475,8 +1472,9 @@ spec:
           properties:
             phase:
               description: Phase indicates current phase of the terraform action.
-                Is a enum PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
+                Is a enum PlanScheduled;PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
               enum:
+              - PlanScheduled
               - PlanRunning
               - WaitingConfirmation
               - ApplyRunning
