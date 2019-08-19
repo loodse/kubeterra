@@ -13,12 +13,41 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package command
 
 import (
-	"github.com/kubermatic/kubeterra/command"
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	command.Execute()
+// Execute is the root command entry function
+func Execute() {
+	rootCmd := newRoot()
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+}
+
+func newRoot() *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:   "kubeterra",
+		Short: "TODO",
+		Long: `
+Terraform controllers manager
+		`,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return cmd.Usage()
+		},
+	}
+
+	rootCmd.AddCommand(
+		managerCmd(),
+		backendCmd(),
+	)
+
+	return rootCmd
 }

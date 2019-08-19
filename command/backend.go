@@ -13,12 +13,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package command
 
 import (
-	"github.com/kubermatic/kubeterra/command"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	command.Execute()
+func backendCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "backend <TerraformStateName>",
+		Args:  cobra.ExactArgs(1),
+		Short: "launch terraform HTTP backend",
+		Long: `
+This process is used as side-car to running terraform. It will proxy terraform
+state to TerraformState object.
+		`,
+		RunE: runBackend,
+	}
+}
+
+func runBackend(_ *cobra.Command, args []string) error {
+	return nil
 }

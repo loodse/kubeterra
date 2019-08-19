@@ -28,7 +28,7 @@ pack:
 	upx ./bin/*
 
 run: generate ## Run against the configured Kubernetes cluster in ~/.kube/config
-	go run *.go
+	go run *.go manager
 
 install: manifests ## Install CRDs into a cluster
 	kubectl apply -f config/crd/bases
