@@ -102,9 +102,8 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 		return result, err
 	}
 
-	if ok, err := r.handleFinalizer(ctx, log, &configObj, r.deleteExternalResources); !ok {
-		errLogMsg(err, "finalizer handling failed")
-		return result, err
+	if ok, err := r.handleFinalizer(ctx, &configObj, r.deleteExternalResources); !ok {
+		return result, errLogMsg(err, "finalizer handling failed")
 	}
 
 	if configObj.Spec.Paused {
@@ -129,7 +128,7 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 	err := r.Get(ctx, stateObjKey, &stateObj)
 	switch {
 	case apierrors.IsNotFound(err):
-		if err2 := r.generateTerraformState(ctx, &configObj, &stateObj); err2 != nil {
+		if err2 := r.generateTerraformState(&configObj, &stateObj); err2 != nil {
 			return result, errLogMsg(err2, "unable to generate TerraformState")
 		}
 		if err3 := r.Create(ctx, &stateObj); err3 != nil {
@@ -150,7 +149,7 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 	err = r.Get(ctx, planObjKey, &planObj)
 	switch {
 	case apierrors.IsNotFound(err):
-		if err2 := r.generateTerraformPlan(ctx, &configObj, &planObj); err2 != nil {
+		if err2 := r.generateTerraformPlan(&configObj, &planObj); err2 != nil {
 			return result, errLogMsg(err2, "unable to generate TerraformPlan")
 		}
 		if err3 := r.Create(ctx, &planObj); err3 != nil {
@@ -167,7 +166,6 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 }
 
 func (r *TerraformConfigurationReconciler) generateTerraformState(
-	ctx context.Context,
 	config *terraformv1alpha1.TerraformConfiguration,
 	state *terraformv1alpha1.TerraformState,
 ) error {
@@ -199,7 +197,6 @@ func (r *TerraformConfigurationReconciler) generateTerraformState(
 }
 
 func (r *TerraformConfigurationReconciler) generateTerraformPlan(
-	ctx context.Context,
 	config *terraformv1alpha1.TerraformConfiguration,
 	plan *terraformv1alpha1.TerraformPlan,
 ) error {
@@ -240,7 +237,6 @@ func (r *TerraformConfigurationReconciler) indexer(kind string) func(runtime.Obj
 // handleFinalizer handles setup / removal of finalizer
 // `ok == false` signalize to calling function to return
 func (r *TerraformConfigurationReconciler) handleFinalizer(ctx context.Context,
-	log logr.Logger,
 	conf *terraformv1alpha1.TerraformConfiguration,
 	cleanup func() error,
 ) (ok bool, err error) {
