@@ -31,7 +31,7 @@ import (
 
 	// +kubebuilder:scaffold:imports
 
-	terraformv1alpha1 "github.com/kubermatic/kubeterra/api/v1alpha1"
+	terraformv1alpha1 "github.com/loodse/kubeterra/api/v1alpha1"
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to

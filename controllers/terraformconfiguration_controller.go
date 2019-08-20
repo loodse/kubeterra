@@ -27,7 +27,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	terraformv1alpha1 "github.com/kubermatic/kubeterra/api/v1alpha1"
+	terraformv1alpha1 "github.com/loodse/kubeterra/api/v1alpha1"
 )
 
 const (

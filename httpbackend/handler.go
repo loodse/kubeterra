@@ -24,7 +24,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	terraformv1alpha1 "github.com/kubermatic/kubeterra/api/v1alpha1"
+	terraformv1alpha1 "github.com/loodse/kubeterra/api/v1alpha1"
 )
 
 type backendHandler struct {

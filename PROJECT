@@ -1,6 +1,6 @@
 version: "2"
 domain: kubeterra.io
-repo: github.com/kubermatic/kubeterra
+repo: github.com/loodse/kubeterra
 resources:
 - group: terraform
   version: v1alpha1

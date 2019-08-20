@@ -1,4 +1,4 @@
-module github.com/kubermatic/kubeterra
+module github.com/loodse/kubeterra
 
 go 1.12
 

@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/kubermatic/kubeterra/manager"
+	"github.com/loodse/kubeterra/manager"
 )
 
 type managerOpts struct {

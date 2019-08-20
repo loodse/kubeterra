@@ -16,7 +16,7 @@ limitations under the License.
 package main
 
 import (
-	"github.com/kubermatic/kubeterra/command"
+	"github.com/loodse/kubeterra/command"
 )
 
 func main() {

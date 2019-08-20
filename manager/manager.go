@@ -27,8 +27,8 @@ import (
 
 	// +kubebuilder:scaffold:imports
 
-	terraformv1alpha1 "github.com/kubermatic/kubeterra/api/v1alpha1"
-	"github.com/kubermatic/kubeterra/controllers"
+	terraformv1alpha1 "github.com/loodse/kubeterra/api/v1alpha1"
+	"github.com/loodse/kubeterra/controllers"
 )
 
 func Launch(metricsAddr string, leaderElection bool) error {

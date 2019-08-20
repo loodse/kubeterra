@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	terraformv1alpha1 "github.com/kubermatic/kubeterra/api/v1alpha1"
+	terraformv1alpha1 "github.com/loodse/kubeterra/api/v1alpha1"
 )
 
 // ListenAndServe launch terraform http backend server

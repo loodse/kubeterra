@@ -22,4 +22,4 @@ linters-settings:
   govet:
     check-shadowing: true
   goimports:
-    local-prefixes: github.com/kubermatic/kubeterra
+    local-prefixes: github.com/loodse/kubeterra

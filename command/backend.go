@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/kubermatic/kubeterra/httpbackend"
+	"github.com/loodse/kubeterra/httpbackend"
 )
 
 type backendOpts struct {
