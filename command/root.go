@@ -20,7 +20,14 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
+
+// GlobalOpts is a struct to embedd to other "opts" structures for
+// viper.Unmarshal
+type GlobalOpts struct {
+	Verbose bool `mapstructure:"verbose"`
+}
 
 // Execute is the root command entry function
 func Execute() {
@@ -33,7 +40,7 @@ func Execute() {
 }
 
 func newRoot() *cobra.Command {
-	rootCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "kubeterra",
 		Short: "TODO",
 		Long: `
@@ -44,10 +51,19 @@ Terraform controllers manager
 		},
 	}
 
-	rootCmd.AddCommand(
+	flags := cmd.PersistentFlags()
+
+	// flags declared here should be cosistent with rootOpts structure
+	flags.BoolP("verbose", "v", false, "verbose output")
+
+	if err := viper.BindPFlags(flags); err != nil {
+		panic(err)
+	}
+
+	cmd.AddCommand(
 		managerCmd(),
 		backendCmd(),
 	)
 
-	return rootCmd
+	return cmd
 }

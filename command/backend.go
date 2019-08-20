@@ -17,21 +17,48 @@ package command
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	"github.com/kubermatic/kubeterra/httpbackend"
 )
 
+type backendOpts struct {
+	GlobalOpts `mapstructure:",squash"`
+	Name       string `mapstructure:"name"`
+	Listen     string `mapstructure:"listen"`
+}
+
 func backendCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "backend <TerraformStateName>",
-		Args:  cobra.ExactArgs(1),
+	cmd := &cobra.Command{
+		Use:   "backend",
+		Args:  cobra.NoArgs,
 		Short: "launch terraform HTTP backend",
 		Long: `
-This process is used as side-car to running terraform. It will proxy terraform
-state to TerraformState object.
+This process is used as side-car to running terraform http backend. It will
+proxy terraform state to TerraformState object.
 		`,
 		RunE: runBackend,
 	}
+
+	flags := cmd.Flags()
+
+	// flags declared here should be cosistent with backendOpts structure
+	flags.StringP("name", "n", "", "name of the terraform state object to use")
+	flags.StringP("listen", "l", ":8081", "listen port")
+	_ = cmd.MarkFlagRequired("name")
+
+	if err := viper.BindPFlags(flags); err != nil {
+		panic(err)
+	}
+	return cmd
 }
 
 func runBackend(_ *cobra.Command, args []string) error {
-	return nil
+	var opts backendOpts
+
+	if err := viper.Unmarshal(&opts); err != nil {
+		return err
+	}
+
+	return httpbackend.ListenAndServe(opts.Name, opts.Listen)
 }
