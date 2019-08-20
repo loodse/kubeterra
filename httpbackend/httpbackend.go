@@ -16,15 +16,15 @@ limitations under the License.
 package httpbackend
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	"github.com/go-logr/logr"
 
 	terraformv1alpha1 "github.com/kubermatic/kubeterra/api/v1alpha1"
 )
@@ -35,7 +35,7 @@ func ListenAndServe(tfStateName string, listen string) error {
 	httpLog := ctrl.Log.WithName("http")
 	httpLog.Info("starting", "port", listen, "state-name", tfStateName)
 
-	mux, err := newHTTPBackendMux(httpLog)
+	mux, err := newHTTPBackendMux(tfStateName, httpLog)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func ListenAndServe(tfStateName string, listen string) error {
 	return http.ListenAndServe(listen, mux)
 }
 
-func newHTTPBackendMux(httpLog logr.Logger) (*http.ServeMux, error) {
+func newHTTPBackendMux(name string, httpLog logr.Logger) (*http.ServeMux, error) {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = terraformv1alpha1.AddToScheme(scheme)
@@ -56,7 +56,9 @@ func newHTTPBackendMux(httpLog logr.Logger) (*http.ServeMux, error) {
 
 	h := &backendHandler{
 		Client: dynClient,
-		Log:    httpLog,
+		log:    httpLog,
+		name:   name,
+		ctx:    context.Background(),
 	}
 
 	mux := http.NewServeMux()

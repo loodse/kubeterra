@@ -16,15 +16,22 @@ limitations under the License.
 package httpbackend
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	terraformv1alpha1 "github.com/kubermatic/kubeterra/api/v1alpha1"
 )
 
 type backendHandler struct {
 	client.Client
-	Log logr.Logger
+	log  logr.Logger
+	name string
+	ctx  context.Context
 }
 
 func (h *backendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +52,14 @@ func (h *backendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *backendHandler) getHandler(w http.ResponseWriter, r *http.Request) {
+	state, err := h.getState()
+	if err != nil {
+		http.Error(w, err.msg, err.code)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "%s", state.Spec.State.Raw)
 }
 
 func (h *backendHandler) postHandler(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +72,26 @@ func (h *backendHandler) lockHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *backendHandler) unlockHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *backendHandler) getState() (*terraformv1alpha1.TerraformState, *httpError) {
+	state := &terraformv1alpha1.TerraformState{}
+	stateKey := client.ObjectKey{Name: h.name, Namespace: ""}
+	err := h.Get(h.ctx, stateKey, state)
+
+	if err != nil {
+		errHttp := &httpError{}
+		if apierrors.IsNotFound(err) {
+			errHttp.code = http.StatusNotFound
+			errHttp.msg = "404 TerraformState not found"
+		} else {
+			errHttp.code = http.StatusInternalServerError
+			errHttp.msg = err.Error()
+		}
+		return nil, errHttp
+	}
+
+	return state, nil
 }
 
 type tfLockInfoModel struct {
@@ -74,4 +108,9 @@ type tfStateModel struct {
 	Version int    `json:"version"`
 	Lineage string `json:"lineage"`
 	Serial  int    `json:"serial"`
+}
+
+type httpError struct {
+	code int
+	msg  string
 }
