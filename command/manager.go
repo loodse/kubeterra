@@ -59,5 +59,5 @@ func runManager(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return manager.Launch(opts.MetricsAddr, opts.EnableLeaderElection)
+	return manager.Launch(opts.MetricsAddr, opts.EnableLeaderElection, opts.Debug)
 }

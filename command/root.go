@@ -27,6 +27,7 @@ import (
 // viper.Unmarshal
 type GlobalOpts struct {
 	Verbose bool `mapstructure:"verbose"`
+	Debug   bool `mapstructure:"debug"`
 }
 
 // Execute is the root command entry function
@@ -55,6 +56,7 @@ Terraform controllers manager
 
 	// flags declared here should be cosistent with rootOpts structure
 	flags.BoolP("verbose", "v", false, "verbose output")
+	flags.BoolP("debug", "d", false, "development mode")
 
 	if err := viper.BindPFlags(flags); err != nil {
 		panic(err)

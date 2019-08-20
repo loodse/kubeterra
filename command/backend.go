@@ -44,7 +44,7 @@ proxy terraform state to TerraformState object.
 
 	// flags declared here should be cosistent with backendOpts structure
 	flags.StringP("name", "n", "", "name of the terraform state object to use")
-	flags.StringP("listen", "l", ":8081", "listen port")
+	flags.StringP("listen", "l", "localhost:8081", "listen port")
 	_ = cmd.MarkFlagRequired("name")
 
 	if err := viper.BindPFlags(flags); err != nil {
@@ -60,5 +60,5 @@ func runBackend(_ *cobra.Command, args []string) error {
 		return err
 	}
 
-	return httpbackend.ListenAndServe(opts.Name, opts.Listen)
+	return httpbackend.ListenAndServe(opts.Name, opts.Listen, opts.Debug)
 }

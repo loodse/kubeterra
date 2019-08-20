@@ -31,14 +31,14 @@ import (
 	"github.com/loodse/kubeterra/controllers"
 )
 
-func Launch(metricsAddr string, leaderElection bool) error {
+func Launch(metricsAddr string, leaderElection bool, development bool) error {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = terraformv1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 
 	setupLog := ctrl.Log.WithName("setup")
-	ctrl.SetLogger(zap.Logger(true))
+	ctrl.SetLogger(zap.Logger(development))
 
 	syncPeriod := 10 * time.Minute
 	mgr, err := ctrl.NewManager(

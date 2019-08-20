@@ -30,8 +30,8 @@ import (
 )
 
 // ListenAndServe launch terraform http backend server
-func ListenAndServe(tfStateName string, listen string) error {
-	ctrl.SetLogger(zap.Logger(true))
+func ListenAndServe(tfStateName string, listen string, development bool) error {
+	ctrl.SetLogger(zap.Logger(development))
 	httpLog := ctrl.Log.WithName("http")
 	httpLog.Info("starting", "port", listen, "state-name", tfStateName)
 
