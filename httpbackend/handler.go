@@ -81,13 +81,16 @@ func (h *backendHandler) getState() (*terraformv1alpha1.TerraformState, *httpErr
 
 	if err != nil {
 		errHttp := &httpError{}
-		if apierrors.IsNotFound(err) {
-			errHttp.code = http.StatusNotFound
-			errHttp.msg = "404 TerraformState not found"
-		} else {
+
+		switch errAPI := err.(type) {
+		case apierrors.APIStatus:
+			errHttp.code = int(errAPI.Status().Code)
+			errHttp.msg = fmt.Sprintf("%s: %s", errAPI.Status().Reason, errAPI.Status().Message)
+		default:
 			errHttp.code = http.StatusInternalServerError
 			errHttp.msg = err.Error()
 		}
+
 		return nil, errHttp
 	}
 
