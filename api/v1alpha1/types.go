@@ -186,6 +186,13 @@ type TerraformStateSpec struct {
 
 // TerraformStateStatus defines the observed state of TerraformState
 type TerraformStateStatus struct {
+	// Lock ID that currently hold locked this state (or lack of such).
+	// +optional
+	LockID string `json:"lockID"`
+
+	// Time since when lock is held
+	// +optional
+	LockedSince metav1.Time `json:"lockedSince,omitempty"`
 }
 
 // +kubebuilder:object:root=true

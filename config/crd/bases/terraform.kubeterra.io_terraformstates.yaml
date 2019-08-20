@@ -41,6 +41,15 @@ spec:
           type: object
         status:
           description: TerraformStateStatus defines the observed state of TerraformState
+          properties:
+            lockID:
+              description: Lock ID that currently hold locked this state (or lack
+                of such).
+              type: string
+            lockedSince:
+              description: Time since when lock is held
+              format: date-time
+              type: string
           type: object
       type: object
   version: v1alpha1
