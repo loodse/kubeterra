@@ -192,7 +192,7 @@ type TerraformStateStatus struct {
 
 	// Time since when lock is held
 	// +optional
-	LockedSince metav1.Time `json:"lockedSince,omitempty"`
+	LockedSince *metav1.Time `json:"lockedSince,omitempty"`
 }
 
 // +kubebuilder:object:root=true
