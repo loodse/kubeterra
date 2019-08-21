@@ -42,156 +42,142 @@ type backendHandler struct {
 func (h *backendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	var err error
 	switch r.Method {
 	case "GET":
-		h.pullState(w, r)
+		err = h.pullState(w, r)
 	case "POST":
-		h.pushState(w, r)
+		err = h.pushState(w, r)
 	case "LOCK":
-		h.lockState(w, r)
+		err = h.lockState(w, r)
 	case "UNLOCK":
-		h.unlockState(w, r)
+		err = h.unlockState(w, r)
 	default:
-		http.NotFound(w, r)
+		err = &httpAPIError{code: http.StatusNotFound, msg: "404 page not found"}
 	}
-}
 
-func (h *backendHandler) pullState(w http.ResponseWriter, _ *http.Request) {
-	state, err := h.getState()
 	if err != nil {
 		apiErr := extractAPIError(err)
 		http.Error(w, apiErr.msg, apiErr.code)
-		return
 	}
-
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "%s", state.Spec.State.Raw)
 }
 
-func (h *backendHandler) pushState(w http.ResponseWriter, r *http.Request) {
+func (h *backendHandler) pullState(w http.ResponseWriter, _ *http.Request) error {
+	state, err := h.getState()
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(w, "%s", state.Spec.State.Raw)
+	return err
+}
+
+func (h *backendHandler) pushState(w http.ResponseWriter, r *http.Request) error {
 	lockID := r.URL.Query().Get("ID")
 	if lockID == "" {
-		http.Error(w, "empty LOCK ID", http.StatusBadRequest)
-		return
+		return &httpAPIError{code: http.StatusBadRequest, msg: "empty LOCK ID"}
 	}
 
 	// TODO: replace ReadAll
 	buf, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	defer r.Body.Close()
 
 	incomingState := stateModel{}
 	err = json.Unmarshal(buf, &incomingState)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	state, err := h.getState()
 	if err != nil {
-		apiErr := extractAPIError(err)
-		http.Error(w, apiErr.msg, apiErr.code)
-		return
+		return err
 	}
 
 	existingState := stateModel{}
 	if err := json.Unmarshal(buf, &existingState); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	if incomingState.Lineage != existingState.Lineage {
-		http.Error(w, "alien state lineage", http.StatusInternalServerError)
-		return
+		return &httpAPIError{code: http.StatusBadRequest, msg: "alien state lineage"}
 	}
 
 	if state.Status.LockID != lockID {
-		http.Error(w, "Locked", http.StatusLocked)
-		return
+		return &httpAPIError{code: http.StatusLocked, msg: "locked"}
 	}
 
 	state.Spec.State.Raw = buf
 	// TODO: try to figure out retryable errors and retry
 	if err := h.Update(h.ctx, state); err != nil {
-		apiErr := extractAPIError(err)
-		http.Error(w, apiErr.msg, apiErr.code)
-		return
+		return err
 	}
 
 	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
-func (h *backendHandler) lockState(w http.ResponseWriter, r *http.Request) {
+func (h *backendHandler) lockState(w http.ResponseWriter, r *http.Request) error {
 	li := lockInfo{}
 	err := json.NewDecoder(r.Body).Decode(&li)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		return err
 	}
 	defer r.Body.Close()
 
 	state, err := h.getState()
 	if err != nil {
-		apiErr := extractAPIError(err)
-		http.Error(w, apiErr.msg, apiErr.code)
-		return
+		return err
 	}
 
 	switch {
 	case li.ID == "":
-		http.Error(w, "Unknown lock ID", http.StatusBadRequest)
+		return &httpAPIError{code: http.StatusBadRequest, msg: "unknown lock ID"}
+	case state.Status.LockID != "":
+		return &httpAPIError{code: http.StatusLocked, msg: "locked"}
+	}
+
+	now := metav1.Now()
+	state.Status.LockID = li.ID
+	state.Status.LockedSince = &now
+	if err := h.Status().Update(h.ctx, state); err != nil {
+		return err
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return nil
+}
+
+func (h *backendHandler) unlockState(w http.ResponseWriter, r *http.Request) error {
+	li := lockInfo{}
+	err := json.NewDecoder(r.Body).Decode(&li)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+
+	state, err := h.getState()
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case li.ID == "":
+		return &httpAPIError{code: http.StatusBadRequest, msg: "unknown lock ID"}
 	case li.ID != state.Status.LockID:
-		http.Error(w, "LOCKED", http.StatusLocked)
-	case state.Status.LockID == "":
-		now := metav1.Now()
-		state.Status.LockID = li.ID
-		state.Status.LockedSince = &now
-		if err := h.Status().Update(h.ctx, state); err != nil {
-			apiErr := extractAPIError(err)
-			http.Error(w, apiErr.msg, apiErr.code)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-	default:
-		http.Error(w, "Unknown state", http.StatusLocked)
-	}
-}
-
-func (h *backendHandler) unlockState(w http.ResponseWriter, r *http.Request) {
-	li := lockInfo{}
-	err := json.NewDecoder(r.Body).Decode(&li)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	defer r.Body.Close()
-
-	state, err := h.getState()
-	if err != nil {
-		apiErr := extractAPIError(err)
-		http.Error(w, apiErr.msg, apiErr.code)
-		return
+		return &httpAPIError{code: http.StatusLocked, msg: "locked"}
 	}
 
-	switch {
-	case li.ID == "":
-		http.Error(w, "Unknown lock ID", http.StatusBadRequest)
-	case li.ID == state.Status.LockID:
-		state.Status.LockID = ""
-		state.Status.LockedSince = nil
-		if err := h.Status().Update(h.ctx, state); err != nil {
-			apiErr := extractAPIError(err)
-			http.Error(w, apiErr.msg, apiErr.code)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-	default:
-		http.Error(w, "LOCKED", http.StatusLocked)
+	state.Status.LockID = ""
+	state.Status.LockedSince = nil
+	// TODO: try to figure out retryable errors and retry
+	if err := h.Status().Update(h.ctx, state); err != nil {
+		return err
 	}
+	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
 func (h *backendHandler) getState() (*terraformv1alpha1.TerraformState, error) {
@@ -219,6 +205,9 @@ func extractAPIError(err error) *httpAPIError {
 	case nil:
 		apiErr.code = http.StatusInternalServerError
 		apiErr.msg = "nil error"
+	case *httpAPIError:
+		apiErr.code = errAPI.code
+		apiErr.msg = errAPI.msg
 	default:
 		apiErr.code = http.StatusInternalServerError
 		apiErr.msg = err.Error()
@@ -246,4 +235,8 @@ type stateModel struct {
 type httpAPIError struct {
 	code int
 	msg  string
+}
+
+func (e *httpAPIError) Error() string {
+	return fmt.Sprintf("%d %s", e.code, e.msg)
 }
