@@ -25,6 +25,7 @@ import (
 type backendOpts struct {
 	GlobalOpts `mapstructure:",squash"`
 	Name       string `mapstructure:"name"`
+	Namespace  string `mapstructure:"namespace"`
 	Listen     string `mapstructure:"listen"`
 }
 
@@ -44,8 +45,10 @@ proxy terraform state to TerraformState object.
 
 	// flags declared here should be cosistent with backendOpts structure
 	flags.StringP("name", "n", "", "name of the terraform state object to use")
+	flags.StringP("namespace", "s", "", "name of the namespace where terraform state object is located")
 	flags.StringP("listen", "l", "localhost:8081", "listen port")
 	_ = cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("namespace")
 
 	if err := viper.BindPFlags(flags); err != nil {
 		panic(err)
@@ -60,5 +63,5 @@ func runBackend(_ *cobra.Command, args []string) error {
 		return err
 	}
 
-	return httpbackend.ListenAndServe(opts.Name, opts.Listen, opts.Debug)
+	return httpbackend.ListenAndServe(opts.Name, opts.Namespace, opts.Listen, opts.Debug)
 }

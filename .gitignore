@@ -15,3 +15,6 @@ bin
 
 # we use gomods and go mod vendor
 /vendor
+
+.terraform
+*.tf

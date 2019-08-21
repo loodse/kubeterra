@@ -30,12 +30,12 @@ import (
 )
 
 // ListenAndServe launch terraform http backend server
-func ListenAndServe(tfStateName string, listen string, development bool) error {
+func ListenAndServe(tfStateName, tfStateNamespace string, listen string, development bool) error {
 	ctrl.SetLogger(zap.Logger(development))
 	httpLog := ctrl.Log.WithName("http")
 	httpLog.Info("starting", "port", listen, "state-name", tfStateName)
 
-	mux, err := newHTTPBackendMux(tfStateName, httpLog)
+	mux, err := newHTTPBackendMux(tfStateName, tfStateNamespace, httpLog)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func ListenAndServe(tfStateName string, listen string, development bool) error {
 	return http.ListenAndServe(listen, mux)
 }
 
-func newHTTPBackendMux(name string, httpLog logr.Logger) (*http.ServeMux, error) {
+func newHTTPBackendMux(name, namespace string, httpLog logr.Logger) (*http.ServeMux, error) {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = terraformv1alpha1.AddToScheme(scheme)
@@ -55,10 +55,11 @@ func newHTTPBackendMux(name string, httpLog logr.Logger) (*http.ServeMux, error)
 	}
 
 	h := &backendHandler{
-		Client: dynClient,
-		log:    httpLog,
-		name:   name,
-		ctx:    context.Background(),
+		Client:    dynClient,
+		log:       httpLog,
+		name:      name,
+		namespace: namespace,
+		ctx:       context.Background(),
 	}
 
 	mux := http.NewServeMux()

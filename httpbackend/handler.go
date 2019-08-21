@@ -33,9 +33,10 @@ import (
 
 type backendHandler struct {
 	client.Client
-	log  logr.Logger
-	name string
-	ctx  context.Context
+	log       logr.Logger
+	ctx       context.Context
+	name      string
+	namespace string
 }
 
 func (h *backendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -195,7 +196,7 @@ func (h *backendHandler) unlockState(w http.ResponseWriter, r *http.Request) {
 
 func (h *backendHandler) getState() (*terraformv1alpha1.TerraformState, error) {
 	state := &terraformv1alpha1.TerraformState{}
-	stateKey := client.ObjectKey{Name: h.name, Namespace: ""}
+	stateKey := client.ObjectKey{Name: h.name, Namespace: h.namespace}
 
 	if err := h.Get(h.ctx, stateKey, state); err != nil {
 		return nil, err
