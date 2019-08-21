@@ -16,9 +16,9 @@ limitations under the License.
 package main
 
 import (
-	"github.com/loodse/kubeterra/command"
+	cli "github.com/loodse/kubeterra/cli"
 )
 
 func main() {
-	command.Execute()
+	cli.Execute()
 }
