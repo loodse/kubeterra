@@ -32,11 +32,6 @@ import (
 
 const (
 	configurationFinalizerName = "configuration.finalizers.terraform.kubeterra.io"
-	jobOwnerKey                = ".metadata.controller"
-)
-
-var (
-	terraformv1alpha1GVStr = terraformv1alpha1.GroupVersion.String()
 )
 
 // TerraformConfigurationReconciler reconciles a TerraformConfiguration object
@@ -53,28 +48,16 @@ type TerraformConfigurationReconciler struct {
 // +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformstates,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformstates/status,verbs=get;update;patch
 
-// logError returns closure which checks error != nil and call log.Error on it.
-// error object will be returned without changes
-func logError(log logr.Logger) func(error, string) error {
-	return func(err error, msg string) error {
-		if err != nil {
-			log.Error(err, msg)
-		}
-		return err
-	}
-}
-
 // SetupWithManager dependency inject controller
 func (r *TerraformConfigurationReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	idx := mgr.GetFieldIndexer()
-	planIndexer := r.indexer("TerraformPlan")
-	stateIndexer := r.indexer("TerraformState")
+	mgrIndexer := mgr.GetFieldIndexer()
+	indexer := indexerFunc("TerraformConfiguration", terraformv1alpha1.GroupVersion.String())
 
-	if err := idx.IndexField(&terraformv1alpha1.TerraformPlan{}, jobOwnerKey, planIndexer); err != nil {
+	if err := mgrIndexer.IndexField(&terraformv1alpha1.TerraformPlan{}, indexOwnerKey, indexer); err != nil {
 		return err
 	}
 
-	if err := idx.IndexField(&terraformv1alpha1.TerraformState{}, jobOwnerKey, stateIndexer); err != nil {
+	if err := mgrIndexer.IndexField(&terraformv1alpha1.TerraformState{}, indexOwnerKey, indexer); err != nil {
 		return err
 	}
 
@@ -96,10 +79,10 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 
 	if err := r.Get(ctx, req.NamespacedName, &configObj); err != nil {
 		if client.IgnoreNotFound(err) == nil {
+			log.Info("not found")
 			return result, nil
 		}
-		log.Error(err, "unable to fetch TerraformConfiguration")
-		return result, err
+		return result, errLogMsg(err, "unable to fetch TerraformConfiguration")
 	}
 
 	if ok, err := r.handleFinalizer(ctx, &configObj, r.deleteExternalResources); !ok {
@@ -107,6 +90,7 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 	}
 
 	if configObj.Spec.Paused {
+		log.Info("paused")
 		return result, nil
 	}
 
@@ -214,26 +198,6 @@ func (r *TerraformConfigurationReconciler) generateTerraformPlan(
 	return nil
 }
 
-func (r *TerraformConfigurationReconciler) indexer(kind string) func(runtime.Object) []string {
-	return func(obj runtime.Object) []string {
-		metaObj, ok := obj.(metav1.Object)
-		if !ok {
-			return nil
-		}
-
-		owner := metav1.GetControllerOf(metaObj)
-		if owner == nil {
-			return nil
-		}
-
-		if owner.APIVersion != terraformv1alpha1GVStr || owner.Kind != kind {
-			return nil
-		}
-
-		return []string{owner.Name}
-	}
-}
-
 // handleFinalizer handles setup / removal of finalizer
 // `ok == false` signalize to calling function to return
 func (r *TerraformConfigurationReconciler) handleFinalizer(ctx context.Context,
@@ -271,31 +235,6 @@ func (r *TerraformConfigurationReconciler) handleFinalizer(ctx context.Context,
 }
 
 func (r *TerraformConfigurationReconciler) deleteExternalResources() error {
+	// TODO
 	return nil
-}
-
-func containsString(slice []string, s string) bool {
-	for _, item := range slice {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}
-
-func removeString(slice []string, s string) []string {
-	result := []string{}
-	for _, item := range slice {
-		if item == s {
-			continue
-		}
-		result = append(result, item)
-	}
-	return result
-}
-
-type stateInfo struct {
-	Version int    `json:"version"`
-	Lineage string `json:"lineage"`
-	Serial  int    `json:"serial"`
 }

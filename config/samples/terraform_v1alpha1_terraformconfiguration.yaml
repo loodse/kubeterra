@@ -2,6 +2,7 @@ apiVersion: terraform.kubeterra.io/v1alpha1
 kind: TerraformConfiguration
 metadata:
   name: sample1
+  namespace: kubeterra-system
 spec:
   configuration: |
     resource "random_id" "server" {
