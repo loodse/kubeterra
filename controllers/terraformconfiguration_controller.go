@@ -18,6 +18,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-uuid"
@@ -144,6 +145,17 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 		}
 	case err != nil:
 		return result, errLogMsg(err, "unable to fetch TerraformPlan")
+	case err == nil:
+		newPlan := terraformv1alpha1.TerraformPlan{}
+		if err2 := r.generateTerraformPlan(&configObj, &newPlan); err2 != nil {
+			return result, errLogMsg(err2, "unable to generate new TerraformPlan")
+		}
+		if !reflect.DeepEqual(&newPlan.Spec, &planObj.Spec) {
+			planObj.ObjectMeta.DeepCopyInto(&newPlan.ObjectMeta)
+			if err3 := r.Update(ctx, &newPlan); err != nil {
+				return result, errLogMsg(err3, "unable to update TerraformPlan")
+			}
+		}
 	}
 
 	return result, nil

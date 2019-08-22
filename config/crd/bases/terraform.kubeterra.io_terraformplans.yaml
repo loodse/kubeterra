@@ -1486,6 +1486,10 @@ spec:
               - Done
               - Fail
               type: string
+            specHash:
+              description: String encoded 32-bit FNV-1a hash of the TerraformPlanSpec.
+                Encoded with https://godoc.org/k8s.io/apimachinery/pkg/util/rand#SafeEncodeString
+              type: string
           required:
           - phase
           type: object

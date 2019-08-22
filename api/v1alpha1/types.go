@@ -148,6 +148,11 @@ type TerraformPlanStatus struct {
 	// +optional
 	GeneratedPlan []byte `json:"generatedPlan,omitempty"`
 
+	// String encoded 32-bit FNV-1a hash of the TerraformPlanSpec.
+	// Encoded with https://godoc.org/k8s.io/apimachinery/pkg/util/rand#SafeEncodeString
+	// +optional
+	SpecHash string `json:"specHash,omitempty"`
+
 	// Phase indicates current phase of the terraform action.
 	// Is a enum PlanScheduled;PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
 	Phase TerraformPhase `json:"phase"`
