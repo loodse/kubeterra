@@ -12,13 +12,17 @@ RUN make build
 # pack manager binary with UPX
 FROM alpine as packer
 
-ENV TERRAFORM_LINK https://releases.hashicorp.com/terraform/0.12.6/terraform_0.12.6_linux_amd64.zip
+ENV TERRAFORM_RELEASES_URL https://releases.hashicorp.com/terraform
+ENV TERRAFORM_VERSION 0.12.7
+ENV TERRAFORM_RELEASE ${TERRAFORM_RELEASES_URL}/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
 WORKDIR /workspace
+COPY --from=builder /workspace/bin/kubeterra ./bin/
 RUN apk add --no-cache upx
-ADD $TERRAFORM_LINK .
-RUN unzip terraform_0.12.6_linux_amd64.zip && rm terraform_0.12.6_linux_amd64.zip
-COPY --from=builder /workspace/bin/kubeterra .
-RUN upx *
+ADD $TERRAFORM_RELEASE .
+RUN unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+    mv terraform ./bin/
+RUN upx ./bin/*
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
@@ -26,6 +30,6 @@ FROM alpine:latest
 
 WORKDIR /
 RUN apk add --no-cache ca-certificates
-COPY --from=packer /workspace/kubeterra .
-COPY --from=packer /workspace/terraform /usr/local/bin/
+COPY --from=packer /workspace/bin/kubeterra .
+COPY --from=packer /workspace/bin/terraform /usr/local/bin/
 CMD ["/kubeterra"]
