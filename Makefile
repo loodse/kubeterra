@@ -4,10 +4,12 @@ export CGO_ENABLED=0
 export GOPROXY=https://proxy.golang.org
 export GO111MODULE=on
 export GOFLAGS?=-mod=readonly
+
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 REGISTRY ?= docker.io/kubermatic
 CONTROLLER_IMG ?= $(REGISTRY)/kubeterra
 TAG ?= dev
+GO_LDFLAGS = -s -w -X github.com/loodse/kubeterra/resources.Image=$(CONTROLLER_IMG):$(TAG)
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -22,7 +24,7 @@ test: generate manifests ## Run tests
 manager: generate build ## Generate code, build manager binary
 
 build: ## Build manager binary
-	go build -ldflags '-s -w' -v -o bin/kubeterra .
+	go build -ldflags '$(GO_LDFLAGS)' -v -o bin/kubeterra .
 
 pack:
 	upx ./bin/*

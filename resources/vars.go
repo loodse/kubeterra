@@ -15,29 +15,6 @@ limitations under the License.
 
 package resources
 
-const (
-	TerraformApplyAutoApproveScript = `
-set -euf -o pipefail
-terraform init
-terraform apply -input=false -no-color -auto-approve
-	`
-
-	TerraformPlanScript = `
-set -euf -o pipefail
-terraform init
-terraform plan -input=false -no-color
-`
-
-	TerraformHTTPBackendConfig = `
-terraform {
-  required_version = ">= 0.12"
-  backend "http" {
-    address        = "http://localhost:8081/"
-    lock_address   = "http://localhost:8081/"
-    unlock_address = "http://localhost:8081/"
-  }
-}
-`
-
-	LinkedTerraformConfigMapAnnotation = "linked-terraform-config-map"
+var (
+	Image = "kubermatic/kubeterra:dev"
 )
