@@ -27,10 +27,10 @@ const (
 
 // logError returns closure which checks error != nil and call log.Error on it.
 // error object will be returned without changes
-func logError(log logr.Logger) func(error, string) error {
-	return func(err error, msg string) error {
+func logError(log logr.Logger) func(error, string, ...interface{}) error {
+	return func(err error, msg string, keyValues ...interface{}) error {
 		if err != nil {
-			log.Error(err, msg)
+			log.Error(err, msg, keyValues...)
 		}
 		return err
 	}
