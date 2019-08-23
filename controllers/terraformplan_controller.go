@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 	corev1typed "k8s.io/client-go/kubernetes/typed/core/v1"
 	khash "k8s.io/kubernetes/pkg/util/hash"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -115,9 +116,10 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		}
 
 		for _, contStatus := range p.Status.ContainerStatuses {
-			if contStatus.Name == "terraform" && contStatus.State.Terminated != nil {
-				// terraform finished
-				// grab the logs
+			if contStatus.Name == "terraform" &&
+				contStatus.State.Terminated != nil &&
+				tfplan.Status.LogsSpecHash != currentSpecHash {
+
 				sinceForever := metav1.Unix(1, 0)
 				logsReq := r.PodClient.Pods(p.Namespace).GetLogs(p.Name, &corev1.PodLogOptions{
 					Container: "terraform",
@@ -136,6 +138,7 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 				}
 
 				tfplan.Status.Logs = buf.String()
+				tfplan.Status.LogsSpecHash = tfplan.Status.SpecHash
 				if err := r.Status().Update(ctx, &tfplan); err != nil {
 					return ctrl.Result{}, errLogMsg(err, "unable to update TerraformPlan.Status")
 				}
@@ -160,12 +163,12 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 				Name:      cmName,
 				Namespace: pod.Namespace,
 			}
-			if err := r.Delete(ctx, &corev1.ConfigMap{ObjectMeta: cmKey}); err != nil {
-				return ctrl.Result{}, errLogMsg(err, "unable to delete configMap", "name", cmName)
+			if err := client.IgnoreNotFound(r.Delete(ctx, &corev1.ConfigMap{ObjectMeta: cmKey})); err != nil {
+				return ctrl.Result{}, errLogMsg(err, "unable to delete configMap")
 			}
 		}
 
-		if err := r.Delete(ctx, &pod); err != nil {
+		if err := client.IgnoreNotFound(r.Delete(ctx, &pod)); err != nil {
 			return ctrl.Result{}, errLogMsg(err, "unable to delete pod")
 		}
 	}
@@ -215,18 +218,31 @@ func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 					Command: []string{"/bin/sh"},
 					Args: []string{
 						"-c",
-						scriptToRun,
+						shellCMD(scriptToRun),
 					},
-					WorkingDir: "/terraform/config/mount",
+					WorkingDir: "/terraform/config",
 					EnvFrom:    tfplan.Spec.Template.EnvFrom,
-					Env:        tfplan.Spec.Template.Env,
-					Resources:  corev1.ResourceRequirements{},
+					Env: append(
+						tfplan.Spec.Template.Env,
+						corev1.EnvVar{
+							Name:  "TF_DATA_DIR",
+							Value: "/terraform/data",
+						},
+						corev1.EnvVar{
+							Name:  "TF_IN_AUTOMATION",
+							Value: "1",
+						},
+						corev1.EnvVar{
+							Name:  "TF_CLI_ARGS",
+							Value: "-no-color -input=false",
+						},
+					),
+					Resources: corev1.ResourceRequirements{},
 					VolumeMounts: append(
 						tfplan.Spec.Template.VolumeMounts,
 						corev1.VolumeMount{
 							Name:      "tfconfig",
-							MountPath: "/terraform/config/mount",
-							ReadOnly:  false,
+							MountPath: "/terraform/config",
 						},
 					),
 				},
@@ -252,6 +268,7 @@ func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: hashedName,
 							},
+							Optional: pointer.BoolPtr(false),
 						},
 					},
 				},
@@ -281,4 +298,8 @@ func deepHashObject(obj interface{}) string {
 	hasher := fnv.New32a()
 	khash.DeepHashObject(hasher, obj)
 	return rand.SafeEncodeString(fmt.Sprint(hasher.Sum32()))
+}
+
+func shellCMD(cmdLines ...string) string {
+	return strings.Join(append([]string{`set -exuf -o pipefail`}, cmdLines...), "\n")
 }
