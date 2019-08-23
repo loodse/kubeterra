@@ -18,24 +18,24 @@ package resources
 const (
 	TerraformApplyAutoApproveScript = `
 set -euf -o pipefail
-terraform init
+terraform init -no-color
 terraform apply -input=false -no-color -auto-approve
 	`
 
 	TerraformPlanScript = `
 set -euf -o pipefail
-terraform init
+terraform init -no-color
 terraform plan -input=false -no-color
 `
 
 	TerraformHTTPBackendConfig = `
 terraform {
-  required_version = ">= 0.12"
-  backend "http" {
-    address        = "http://localhost:8081/"
-    lock_address   = "http://localhost:8081/"
-    unlock_address = "http://localhost:8081/"
-  }
+	required_version = ">= 0.12"
+	backend "http" {
+		address        = "http://localhost:8081/"
+		lock_address   = "http://localhost:8081/"
+		unlock_address = "http://localhost:8081/"
+	}
 }
 `
 

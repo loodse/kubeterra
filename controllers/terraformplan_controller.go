@@ -66,6 +66,10 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{}, errLogMsg(err, "unable to fetch TerraformPlan")
 	}
 
+	if tfplan.Spec.Template == nil {
+		tfplan.Spec.Template = &terraformv1alpha1.TerraformConfigurationTemplate{}
+	}
+
 	currentSpecHash := deepHashObject(tfplan.Spec)
 	planSpecChanged := currentSpecHash != tfplan.Status.SpecHash
 	tfplan.Status.SpecHash = currentSpecHash
@@ -188,17 +192,17 @@ func (r *TerraformPlanReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func generatePod(tfPlan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
-	hashedName := fmt.Sprintf("%s-%s", tfPlan.Name, tfPlan.Status.SpecHash)
+func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
+	hashedName := fmt.Sprintf("%s-%s", tfplan.Name, tfplan.Status.SpecHash)
 	scriptToRun := resources.TerraformPlanScript
-	if tfPlan.Spec.Approved {
+	if tfplan.Spec.Approved {
 		scriptToRun = resources.TerraformApplyAutoApproveScript
 	}
 
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: hashedName + "-",
-			Namespace:    tfPlan.Namespace,
+			Namespace:    tfplan.Namespace,
 			Annotations: map[string]string{
 				resources.LinkedTerraformConfigMapAnnotation: hashedName,
 			},
@@ -214,14 +218,15 @@ func generatePod(tfPlan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 						scriptToRun,
 					},
 					WorkingDir: "/terraform/config/mount",
-					EnvFrom:    tfPlan.Spec.Template.EnvFrom,
-					Env:        tfPlan.Spec.Template.Env,
+					EnvFrom:    tfplan.Spec.Template.EnvFrom,
+					Env:        tfplan.Spec.Template.Env,
 					Resources:  corev1.ResourceRequirements{},
 					VolumeMounts: append(
-						tfPlan.Spec.Template.VolumeMounts,
+						tfplan.Spec.Template.VolumeMounts,
 						corev1.VolumeMount{
 							Name:      "tfconfig",
 							MountPath: "/terraform/config/mount",
+							ReadOnly:  false,
 						},
 					),
 				},
@@ -229,17 +234,17 @@ func generatePod(tfPlan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 					Name:  "httpbackend",
 					Image: resources.Image,
 					Command: []string{
-						"/manager",
+						"/kubeterra",
 						"backend",
 						"--name",
-						tfPlan.Name,
+						tfplan.Name,
 						"--namespace",
-						tfPlan.Namespace,
+						tfplan.Namespace,
 					},
 				},
 			},
 			Volumes: append(
-				tfPlan.Spec.Template.Volumes,
+				tfplan.Spec.Template.Volumes,
 				corev1.Volume{
 					Name: "tfconfig",
 					VolumeSource: corev1.VolumeSource{
