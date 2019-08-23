@@ -51,7 +51,7 @@ generate: controller-gen ## Generate code
 	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
 
 docker-build: ## Build the docker image
-	docker build . -t ${CONTROLLER_IMG}:${TAG}
+	docker build . -t ${CONTROLLER_IMG}:${TAG} --pull --build-arg tag=$(TAG)
 	@echo "updating kustomize image patch file for manager resource"
 	sed -i '' -e 's@image: .*@image: '"${CONTROLLER_IMG}:${TAG}"'@' ./config/default/manager_image_patch.yaml
 

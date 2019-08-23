@@ -1,13 +1,14 @@
 # Build the manager binary
 FROM golang:1.12.7 as builder
 
+ARG tag=dev
 WORKDIR /workspace
 COPY go.mod .
 COPY go.sum .
 COPY Makefile .
 RUN make gomod
 COPY . /workspace
-RUN make build
+RUN TAG=${tag} make build
 
 # pack manager binary with UPX
 FROM alpine as packer
