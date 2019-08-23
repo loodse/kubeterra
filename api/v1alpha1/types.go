@@ -123,6 +123,11 @@ type TerraformConfigurationList struct {
 
 // TerraformPlanSpec defines the desired state of TerraformPlan
 type TerraformPlanSpec struct {
+	// ForceTrigger Is a way to trigger new terraform run, simply update it with
+	// any random data
+	// +optional
+	ForceTrigger string `json:"forceTrigger,omitempty"`
+
 	// Indicate if plan approved to apply
 	Approved bool `json:"approved"`
 
@@ -142,7 +147,11 @@ type TerraformPlanSpec struct {
 type TerraformPlanStatus struct {
 	// Contain logs output
 	// +optional
-	Logs string `json:"logs"`
+	Logs string `json:"logs,omitempty"`
+
+	// Copy of SpecHash, for which logs are collected
+	// +optional
+	LogsSpecHash string `json:"logsSpecHash,omitempty"`
 
 	// Base64 encoded contents of the `terraform plan -out`
 	// +optional

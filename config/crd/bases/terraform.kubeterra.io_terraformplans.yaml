@@ -48,6 +48,10 @@ spec:
             configuration:
               description: Configuration holds whole terraform configuration definition
               type: string
+            forceTrigger:
+              description: ForceTrigger Is a way to trigger new terraform run, simply
+                update it with any random data
+              type: string
             template:
               description: Defines some aspects of resulting Pod that will run terraform
                 plan / teterraform apply
@@ -1474,6 +1478,9 @@ spec:
               type: string
             logs:
               description: Contain logs output
+              type: string
+            logsSpecHash:
+              description: Copy of SpecHash, for which logs are collected
               type: string
             phase:
               description: Phase indicates current phase of the terraform action.
