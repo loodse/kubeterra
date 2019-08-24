@@ -76,9 +76,9 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 	errLogMsg := logError(log)
 
 	result := ctrl.Result{}
-	var configObj terraformv1alpha1.TerraformConfiguration
+	var tfconfig terraformv1alpha1.TerraformConfiguration
 
-	if err := r.Get(ctx, req.NamespacedName, &configObj); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, &tfconfig); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			log.Info("not found")
 			return result, nil
@@ -86,75 +86,76 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 		return result, errLogMsg(err, "unable to fetch TerraformConfiguration")
 	}
 
-	if ok, err := r.handleFinalizer(ctx, &configObj, r.deleteExternalResources); !ok {
+	if ok, err := r.handleFinalizer(ctx, &tfconfig, r.deleteExternalResources); !ok {
 		return result, errLogMsg(err, "finalizer handling failed")
 	}
 
-	if configObj.Spec.Paused {
+	if tfconfig.Spec.Paused {
 		log.Info("paused")
 		return result, nil
 	}
 
-	if configObj.Status.Phase == "" {
-		configObj.Status.Phase = terraformv1alpha1.TerraformPhasePlanScheduled
-		if err := errLogMsg(r.Status().Update(ctx, &configObj), "unable to update status"); err != nil {
+	if tfconfig.Status.Phase == "" {
+		tfconfig.Status.Phase = terraformv1alpha1.TerraformPhasePlanScheduled
+		if err := errLogMsg(r.Status().Update(ctx, &tfconfig), "unable to update status"); err != nil {
 			return result, err
 		}
 	}
 
-	var stateObj = terraformv1alpha1.TerraformState{
+	var tfstate = terraformv1alpha1.TerraformState{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      configObj.Name,
-			Namespace: configObj.Namespace,
+			Name:      tfconfig.Name,
+			Namespace: tfconfig.Namespace,
 		},
 	}
 
-	stateObjKey, _ := client.ObjectKeyFromObject(&stateObj)
-	err := r.Get(ctx, stateObjKey, &stateObj)
+	tfstateKey, _ := client.ObjectKeyFromObject(&tfstate)
+	err := r.Get(ctx, tfstateKey, &tfstate)
 	switch {
 	case apierrors.IsNotFound(err):
-		if err2 := r.generateTerraformState(&configObj, &stateObj); err2 != nil {
+		if err2 := r.generateTerraformState(&tfconfig, &tfstate); err2 != nil {
 			return result, errLogMsg(err2, "unable to generate TerraformState")
 		}
-		if err3 := r.Create(ctx, &stateObj); err3 != nil {
+		if err3 := r.Create(ctx, &tfstate); err3 != nil {
 			return result, errLogMsg(err3, "unable to create TerraformState")
 		}
 	case err != nil:
 		return result, errLogMsg(err, "unable to fetch TerraformState")
 	}
 
-	var planObj = terraformv1alpha1.TerraformPlan{
+	var tfplan = terraformv1alpha1.TerraformPlan{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      configObj.Name,
-			Namespace: configObj.Namespace,
+			Name:      tfconfig.Name,
+			Namespace: tfconfig.Namespace,
 		},
 	}
 
-	planObjKey, _ := client.ObjectKeyFromObject(&planObj)
-	err = r.Get(ctx, planObjKey, &planObj)
+	tfplanKey, _ := client.ObjectKeyFromObject(&tfplan)
+	err = r.Get(ctx, tfplanKey, &tfplan)
 	switch {
 	case apierrors.IsNotFound(err):
-		if err2 := r.generateTerraformPlan(&configObj, &planObj); err2 != nil {
+		if err2 := r.generateTerraformPlan(&tfconfig, &tfplan); err2 != nil {
 			return result, errLogMsg(err2, "unable to generate TerraformPlan")
 		}
-		if err3 := r.Create(ctx, &planObj); err3 != nil {
+		if err3 := r.Create(ctx, &tfplan); err3 != nil {
 			return result, errLogMsg(err3, "unable to create TerraformPlan")
 		}
-		if err4 := r.Status().Update(ctx, &planObj); err4 != nil {
+		if err4 := r.Status().Update(ctx, &tfplan); err4 != nil {
 			return result, errLogMsg(err4, "unable to update status of TerraformPlan")
 		}
 	case err != nil:
 		return result, errLogMsg(err, "unable to fetch TerraformPlan")
 	}
 
-	newPlan := terraformv1alpha1.TerraformPlan{}
-	if err2 := r.generateTerraformPlan(&configObj, &newPlan); err2 != nil {
-		return result, errLogMsg(err2, "unable to generate new TerraformPlan")
+	var tfplanNew terraformv1alpha1.TerraformPlan
+	if err := r.generateTerraformPlan(&tfconfig, &tfplanNew); err != nil {
+		return result, errLogMsg(err, "unable to generate new TerraformPlan")
 	}
-	if !reflect.DeepEqual(&newPlan.Spec, &planObj.Spec) {
-		planObj.ObjectMeta.DeepCopyInto(&newPlan.ObjectMeta)
-		if err3 := r.Update(ctx, &newPlan); err3 != nil {
-			return result, errLogMsg(err3, "unable to update TerraformPlan")
+
+	if !reflect.DeepEqual(&tfplanNew.Spec, &tfplan.Spec) {
+		tfplan.ObjectMeta.DeepCopyInto(&tfplanNew.ObjectMeta)
+		if err := r.Update(ctx, &tfplanNew); err != nil {
+			return result, errLogMsg(err, "unable to update TerraformPlan")
 		}
 	}
 
@@ -213,17 +214,17 @@ func (r *TerraformConfigurationReconciler) generateTerraformPlan(
 // handleFinalizer handles setup / removal of finalizer
 // `ok == false` signalize to calling function to return
 func (r *TerraformConfigurationReconciler) handleFinalizer(ctx context.Context,
-	conf *terraformv1alpha1.TerraformConfiguration,
+	tfconf *terraformv1alpha1.TerraformConfiguration,
 	cleanup func() error,
 ) (ok bool, err error) {
 
-	if conf.ObjectMeta.DeletionTimestamp.IsZero() {
-		if !containsString(conf.ObjectMeta.Finalizers, configurationFinalizerName) {
-			conf.ObjectMeta.Finalizers = append(
-				conf.ObjectMeta.Finalizers,
+	if tfconf.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !containsString(tfconf.ObjectMeta.Finalizers, configurationFinalizerName) {
+			tfconf.ObjectMeta.Finalizers = append(
+				tfconf.ObjectMeta.Finalizers,
 				configurationFinalizerName,
 			)
-			if err := r.Update(ctx, conf); err != nil {
+			if err := r.Update(ctx, tfconf); err != nil {
 				return false, err
 			}
 			return false, nil
@@ -232,13 +233,13 @@ func (r *TerraformConfigurationReconciler) handleFinalizer(ctx context.Context,
 	}
 
 	// TerraformConfiguration object is being deleted
-	if containsString(conf.ObjectMeta.Finalizers, configurationFinalizerName) {
+	if containsString(tfconf.ObjectMeta.Finalizers, configurationFinalizerName) {
 		if err := cleanup(); err != nil {
 			return false, err
 		}
 
-		conf.ObjectMeta.Finalizers = removeString(conf.ObjectMeta.Finalizers, configurationFinalizerName)
-		if err := r.Update(ctx, conf); err != nil {
+		tfconf.ObjectMeta.Finalizers = removeString(tfconf.ObjectMeta.Finalizers, configurationFinalizerName)
+		if err := r.Update(ctx, tfconf); err != nil {
 			return false, err
 		}
 	}

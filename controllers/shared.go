@@ -30,7 +30,7 @@ const (
 func logError(log logr.Logger) func(error, string, ...interface{}) error {
 	return func(err error, msg string, keyValues ...interface{}) error {
 		if err != nil {
-			log.Error(err, msg, keyValues...)
+			log.Info(msg, append([]interface{}{"error", err.Error()}, keyValues...)...)
 		}
 		return err
 	}

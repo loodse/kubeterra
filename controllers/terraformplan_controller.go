@@ -25,6 +25,7 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -48,6 +49,8 @@ type TerraformPlanReconciler struct {
 
 // +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformlogs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformlogs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=pods/status,verbs=get
 // +kubebuilder:rbac:groups=core,resources=pods/logs,verbs=get
@@ -60,11 +63,23 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	errLogMsg := logError(log)
 
 	var tfplan terraformv1alpha1.TerraformPlan
+
 	if err := r.Get(ctx, req.NamespacedName, &tfplan); err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{}, errLogMsg(err, "unable to fetch TerraformPlan")
+		return ctrl.Result{}, err
+	}
+
+	if !tfplan.GetDeletionTimestamp().IsZero() {
+		// TODO cleanup stuff
+		return ctrl.Result{}, nil
+	}
+
+	if tfplan.Status.Phase == "" {
+		// incomplete plan
+		// wait for status update from TerraformConfigurationReconciler
+		return ctrl.Result{}, nil
 	}
 
 	if tfplan.Spec.Template == nil {
@@ -74,6 +89,10 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	currentSpecHash := deepHashObject(tfplan.Spec)
 	planSpecChanged := currentSpecHash != tfplan.Status.SpecHash
 	tfplan.Status.SpecHash = currentSpecHash
+	if err := r.Status().Update(ctx, &tfplan); err != nil {
+		log.Info("can't update tfplan")
+		return ctrl.Result{}, err
+	}
 
 	if planSpecChanged {
 		pod := generatePod(&tfplan)
@@ -94,10 +113,6 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		if err := r.Create(ctx, pod); err != nil {
 			return ctrl.Result{}, errLogMsg(err, "unable to create pod", "pod", pod.Name)
 		}
-
-		if err := r.Status().Update(ctx, &tfplan); err != nil {
-			return ctrl.Result{}, errLogMsg(err, "unable to update TerraformPlan status")
-		}
 	}
 
 	var podList corev1.PodList
@@ -105,54 +120,34 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{}, errLogMsg(err, "unable to list owned Pods")
 	}
 
-	prefix := fmt.Sprintf("%s-%s", tfplan.Name, currentSpecHash)
+	prefix := hashedName(&tfplan)
 	podsToDelete := []corev1.Pod{}
+
 	for _, p := range podList.Items {
-		if !strings.HasPrefix(p.Name, prefix) {
-			podsToDelete = append(podsToDelete, p)
-			log.Info("pod name has no current preffix, delete", "pod", p.Name)
-			// needed to avoid placing it second time in toDelete slice
-			continue
-		}
-
-		for _, contStatus := range p.Status.ContainerStatuses {
-			if contStatus.Name == "terraform" &&
-				contStatus.State.Terminated != nil &&
-				tfplan.Status.LogsSpecHash != currentSpecHash {
-
-				sinceForever := metav1.Unix(1, 0)
-				logsReq := r.PodClient.Pods(p.Namespace).GetLogs(p.Name, &corev1.PodLogOptions{
-					Container: "terraform",
-					SinceTime: &sinceForever,
-				})
-				terraformLogs, err := logsReq.Stream()
-				if err != nil {
-					return ctrl.Result{}, errLogMsg(err, "unable to stream logs from pod")
+		pod := p
+		switch {
+		case !strings.HasPrefix(pod.Name, prefix):
+			podsToDelete = append(podsToDelete, pod)
+		case r.terraformRunFinished(pod):
+			podsToDelete = append(podsToDelete, pod)
+			tflogKey := client.ObjectKey{Name: hashedName(&tfplan), Namespace: tfplan.Namespace}
+			err := r.Get(ctx, tflogKey, &terraformv1alpha1.TerraformLog{})
+			switch {
+			case apierrors.IsNotFound(err):
+				tflog, err2 := r.fetchLogsAndGenerateTerraformLog(&tfplan, pod)
+				if err2 != nil {
+					return ctrl.Result{}, err2
 				}
-				defer terraformLogs.Close()
-
-				var buf bytes.Buffer
-				_, err = io.Copy(&buf, terraformLogs)
-				if err != nil {
-					return ctrl.Result{}, errLogMsg(err, "unable to copy logs from pod")
+				if err3 := r.Create(ctx, tflog); err3 != nil {
+					return ctrl.Result{}, err3
 				}
-
-				tfplan.Status.Logs = buf.String()
-				tfplan.Status.LogsSpecHash = tfplan.Status.SpecHash
-				if err := r.Status().Update(ctx, &tfplan); err != nil {
-					return ctrl.Result{}, errLogMsg(err, "unable to update TerraformPlan.Status")
-				}
-
-				podsToDelete = append(podsToDelete, p)
-				continue
+			case err == nil:
+				// tflog already exists, do nothing
+			default:
+				return ctrl.Result{}, err
 			}
-		}
-
-		switch p.Status.Phase {
-		case corev1.PodPending, corev1.PodRunning:
-		default:
-			log.Info("pod in non running phase, delete", "pod", p.Name, "phase", p.Status.Phase)
-			podsToDelete = append(podsToDelete, p)
+		case !podInPhase(pod, corev1.PodPending, corev1.PodRunning):
+			podsToDelete = append(podsToDelete, pod)
 		}
 	}
 
@@ -163,12 +158,14 @@ func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 				Name:      cmName,
 				Namespace: pod.Namespace,
 			}
-			if err := client.IgnoreNotFound(r.Delete(ctx, &corev1.ConfigMap{ObjectMeta: cmKey})); err != nil {
+			err := ignoreAPIErrors(r.Delete(ctx, &corev1.ConfigMap{ObjectMeta: cmKey}), apierrors.IsNotFound, apierrors.IsGone)
+			if err != nil {
 				return ctrl.Result{}, errLogMsg(err, "unable to delete configMap")
 			}
 		}
 
-		if err := client.IgnoreNotFound(r.Delete(ctx, &pod)); err != nil {
+		err := ignoreAPIErrors(r.Delete(ctx, &pod), apierrors.IsNotFound, apierrors.IsGone)
+		if err != nil {
 			return ctrl.Result{}, errLogMsg(err, "unable to delete pod")
 		}
 	}
@@ -189,14 +186,35 @@ func (r *TerraformPlanReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
+	if err := mgrIndexer.IndexField(&terraformv1alpha1.TerraformLog{}, indexOwnerKey, indexer); err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&terraformv1alpha1.TerraformPlan{}).
 		Owns(&corev1.Pod{}).
 		Complete(r)
 }
 
+func (r *TerraformPlanReconciler) terraformRunFinished(pod corev1.Pod) bool {
+	for _, contStatus := range pod.Status.ContainerStatuses {
+		if contStatus.Name == "terraform" && contStatus.State.Terminated != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func podInPhase(pod corev1.Pod, phases ...corev1.PodPhase) bool {
+	for _, phase := range phases {
+		if pod.Status.Phase == phase {
+			return true
+		}
+	}
+	return false
+}
+
 func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
-	hashedName := fmt.Sprintf("%s-%s", tfplan.Name, tfplan.Status.SpecHash)
 	scriptToRun := resources.TerraformPlanScript
 	if tfplan.Spec.Approved {
 		scriptToRun = resources.TerraformApplyAutoApproveScript
@@ -204,10 +222,10 @@ func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: hashedName + "-",
+			GenerateName: hashedName(tfplan) + "-",
 			Namespace:    tfplan.Namespace,
 			Annotations: map[string]string{
-				resources.LinkedTerraformConfigMapAnnotation: hashedName,
+				resources.LinkedTerraformConfigMapAnnotation: hashedName(tfplan),
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -266,7 +284,7 @@ func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: hashedName,
+								Name: hashedName(tfplan),
 							},
 							Optional: pointer.BoolPtr(false),
 						},
@@ -278,20 +296,54 @@ func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 	}
 }
 
-func generateConfigMap(tfPlan *terraformv1alpha1.TerraformPlan) *corev1.ConfigMap {
-	hashedName := fmt.Sprintf("%s-%s", tfPlan.Name, tfPlan.Status.SpecHash)
-
+func generateConfigMap(tfplan *terraformv1alpha1.TerraformPlan) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      hashedName,
-			Namespace: tfPlan.Namespace,
+			Name:      hashedName(tfplan),
+			Namespace: tfplan.Namespace,
 		},
 		Data: map[string]string{
-			"main.tf":          tfPlan.Spec.Configuration,
+			"main.tf":          tfplan.Spec.Configuration,
 			"httpbackend.tf":   resources.TerraformHTTPBackendConfig,
-			"terraform.tfvars": tfPlan.Spec.Values,
+			"terraform.tfvars": tfplan.Spec.Values,
 		},
 	}
+}
+
+func (r *TerraformPlanReconciler) fetchLogsAndGenerateTerraformLog(tfplan *terraformv1alpha1.TerraformPlan, pod corev1.Pod) (*terraformv1alpha1.TerraformLog, error) {
+	sinceForever := metav1.Unix(1, 0)
+	logsReq := r.PodClient.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
+		Container: "terraform",
+		SinceTime: &sinceForever,
+	})
+
+	terraformLogs, err := logsReq.Stream()
+	if err != nil {
+		return nil, err
+	}
+	defer terraformLogs.Close()
+
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, terraformLogs)
+	if err != nil {
+		return nil, err
+	}
+
+	tflog := &terraformv1alpha1.TerraformLog{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      hashedName(tfplan),
+			Namespace: tfplan.Namespace,
+		},
+		Spec: terraformv1alpha1.TerraformLogSpec{
+			Log: buf.String(),
+		},
+	}
+
+	return tflog, ctrl.SetControllerReference(tfplan, tflog, r.Scheme)
+}
+
+func hashedName(tfplan *terraformv1alpha1.TerraformPlan) string {
+	return fmt.Sprintf("%s-%s", tfplan.Name, tfplan.Status.SpecHash)
 }
 
 func deepHashObject(obj interface{}) string {
@@ -302,4 +354,13 @@ func deepHashObject(obj interface{}) string {
 
 func shellCMD(cmdLines ...string) string {
 	return strings.Join(append([]string{`set -exuf -o pipefail`}, cmdLines...), "\n")
+}
+
+func ignoreAPIErrors(err error, checks ...func(error) bool) error {
+	for _, check := range checks {
+		if check(err) {
+			return nil
+		}
+	}
+	return err
 }
