@@ -145,14 +145,6 @@ type TerraformPlanSpec struct {
 
 // TerraformPlanStatus defines the observed state of TerraformPlan
 type TerraformPlanStatus struct {
-	// Contain logs output
-	// +optional
-	Logs string `json:"logs,omitempty"`
-
-	// Copy of SpecHash, for which logs are collected
-	// +optional
-	LogsSpecHash string `json:"logsSpecHash,omitempty"`
-
 	// Base64 encoded contents of the `terraform plan -out`
 	// +optional
 	GeneratedPlan []byte `json:"generatedPlan,omitempty"`
@@ -171,6 +163,7 @@ type TerraformPlanStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=tfplan;tfplans
 // +kubebuilder:printcolumn:name="Approved",type=string,JSONPath=`.spec.approved`
+// +kubebuilder:printcolumn:name="Spec Hash",type=string,JSONPath=`.status.specHash`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 
 // TerraformPlan is the Schema for the terraformplans API
@@ -232,7 +225,11 @@ type TerraformStateList struct {
 }
 
 // TerraformLogSpec defines the desired state of TerraformLog
-type TerraformLogSpec struct{}
+type TerraformLogSpec struct {
+	// Contain logs output
+	// +optional
+	Log string `json:"log,omitempty"`
+}
 
 // TerraformLogStatus defines the observed state of TerraformLog
 type TerraformLogStatus struct{}

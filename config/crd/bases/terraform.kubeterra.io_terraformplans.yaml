@@ -10,6 +10,9 @@ spec:
   - JSONPath: .spec.approved
     name: Approved
     type: string
+  - JSONPath: .status.specHash
+    name: Spec Hash
+    type: string
   - JSONPath: .status.phase
     name: Phase
     type: string
@@ -1475,12 +1478,6 @@ spec:
             generatedPlan:
               description: Base64 encoded contents of the `terraform plan -out`
               format: byte
-              type: string
-            logs:
-              description: Contain logs output
-              type: string
-            logsSpecHash:
-              description: Copy of SpecHash, for which logs are collected
               type: string
             phase:
               description: Phase indicates current phase of the terraform action.

@@ -4,7 +4,8 @@ metadata:
   name: sample1
   namespace: kubeterra-system
 spec:
+  autoApprove: true
   configuration: |
     resource "random_id" "server" {
-      byte_length = 8
+      byte_length = 4
     }

@@ -65,6 +65,26 @@ rules:
 - apiGroups:
   - terraform.kubeterra.io
   resources:
+  - terraformlogs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
+  - terraformlogs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - terraform.kubeterra.io
+  resources:
   - terraformplans
   verbs:
   - create
