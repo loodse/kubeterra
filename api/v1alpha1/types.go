@@ -231,6 +231,34 @@ type TerraformStateList struct {
 	Items           []TerraformState `json:"items"`
 }
 
+// TerraformLogSpec defines the desired state of TerraformLog
+type TerraformLogSpec struct{}
+
+// TerraformLogStatus defines the observed state of TerraformLog
+type TerraformLogStatus struct{}
+
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName=tflog;tflogs
+
+// TerraformLog is the Schema for the terraformlogs API
+type TerraformLog struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   TerraformLogSpec   `json:"spec,omitempty"`
+	Status TerraformLogStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// TerraformLogList contains a list of TerraformLog
+type TerraformLogList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []TerraformLog `json:"items"`
+}
+
 func init() {
 	SchemeBuilder.Register(
 		&TerraformConfiguration{},
@@ -239,5 +267,7 @@ func init() {
 		&TerraformPlanList{},
 		&TerraformState{},
 		&TerraformStateList{},
+		&TerraformLog{},
+		&TerraformLogList{},
 	)
 }
