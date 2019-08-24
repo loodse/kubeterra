@@ -229,6 +229,9 @@ func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 			},
 		},
 		Spec: corev1.PodSpec{
+			SecurityContext: &corev1.PodSecurityContext{
+				RunAsNonRoot: pointer.BoolPtr(true),
+			},
 			Containers: []corev1.Container{
 				{
 					Name:    "terraform",
@@ -244,7 +247,7 @@ func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 						tfplan.Spec.Template.Env,
 						corev1.EnvVar{
 							Name:  "TF_DATA_DIR",
-							Value: "/terraform/data",
+							Value: "/tmp/tfdata",
 						},
 						corev1.EnvVar{
 							Name:  "TF_IN_AUTOMATION",

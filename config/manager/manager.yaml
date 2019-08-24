@@ -24,6 +24,8 @@ spec:
       labels:
         control-plane: kubeterra-controller-manager
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
       - command:
         - /kubeterra
