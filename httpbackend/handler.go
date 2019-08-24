@@ -62,7 +62,7 @@ func (h *backendHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *backendHandler) pullState(w http.ResponseWriter, _ *http.Request) error {
+func (h *backendHandler) pullState(w http.ResponseWriter, _ *http.Request) error { //nolint:interfacer
 	state, err := h.getState()
 	if err != nil {
 		return err
