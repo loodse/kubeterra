@@ -253,10 +253,6 @@ func generatePod(tfplan *terraformv1alpha1.TerraformPlan) *corev1.Pod {
 							Name:  "TF_IN_AUTOMATION",
 							Value: "1",
 						},
-						corev1.EnvVar{
-							Name:  "TF_CLI_ARGS",
-							Value: "-no-color -input=false",
-						},
 					),
 					Resources: corev1.ResourceRequirements{},
 					VolumeMounts: append(

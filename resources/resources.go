@@ -17,13 +17,13 @@ package resources
 
 const (
 	TerraformApplyAutoApproveScript = `
-terraform init
-terraform apply -auto-approve
+terraform init -no-color
+terraform apply -no-color -input=false -auto-approve
 	`
 
 	TerraformPlanScript = `
-terraform init
-terraform plan
+terraform init -no-color
+terraform plan -no-color -input=false
 `
 
 	TerraformHTTPBackendConfig = `
