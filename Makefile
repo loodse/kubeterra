@@ -7,7 +7,7 @@ export GOFLAGS?=-mod=readonly
 
 CONTROLLER_GEN=go run sigs.k8s.io/controller-tools/cmd/controller-gen
 CRD_OPTIONS ?= "crd:trivialVersions=true"
-REGISTRY ?= docker.io/kubermatic
+REGISTRY ?= quay.io/kubermatic
 CONTROLLER_IMG ?= $(REGISTRY)/kubeterra
 TAG ?= dev
 GO_LDFLAGS = -s -w -X github.com/loodse/kubeterra/resources.Image=$(CONTROLLER_IMG):$(TAG)
@@ -33,7 +33,7 @@ deploy: manifests ## Deploy controller in the configured Kubernetes cluster in ~
 	kubectl apply -f config/crd/bases
 	kustomize build config/default | kubectl apply -f -
 
-manifests: ## Generate manifests e.g. CRD, RBAC etc.
+manifests: ## Generate YAML manifests e.g. CRD, RBAC etc.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=kubeterra webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 lint: ## Run golangci-lint against code
@@ -41,7 +41,7 @@ lint: ## Run golangci-lint against code
 
 gen: generate manifests ## Shortcut to generate code and manifests
 
-generate: ## Generate code
+generate: ## Generate go code
 	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
 
 docker-build: ## Build the docker image
