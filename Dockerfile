@@ -36,5 +36,5 @@ WORKDIR /
 RUN apk add --no-cache ca-certificates
 COPY --from=packer /workspace/bin/kubeterra .
 COPY --from=packer /workspace/bin/terraform /usr/local/bin/
-USER nobody:nobody
+USER 65534:65534
 CMD ["/kubeterra"]

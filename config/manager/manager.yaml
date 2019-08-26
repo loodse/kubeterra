@@ -18,7 +18,7 @@ spec:
   selector:
     matchLabels:
       control-plane: kubeterra-controller-manager
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -27,17 +27,17 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-      - command:
+      - name: manager
+        image: controller:latest
+        command:
         - /kubeterra
         args:
         - manager
         - --enable-leader-election
-        image: controller:latest
-        name: manager
         resources:
           limits:
             cpu: 1
-            memory: 100Mi
+            memory: 200Mi
           requests:
             cpu: 100m
             memory: 100Mi
