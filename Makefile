@@ -7,7 +7,7 @@ export GOFLAGS?=-mod=readonly
 
 CONTROLLER_GEN=go run sigs.k8s.io/controller-tools/cmd/controller-gen
 CRD_OPTIONS ?= "crd:trivialVersions=true"
-REGISTRY ?= quay.io/kubermatic
+REGISTRY ?= quay.io/loodse
 CONTROLLER_IMG ?= $(REGISTRY)/kubeterra
 TAG ?= dev
 GO_LDFLAGS = -s -w -X github.com/loodse/kubeterra/resources.Image=$(CONTROLLER_IMG):$(TAG)
