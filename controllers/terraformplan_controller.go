@@ -47,14 +47,14 @@ type TerraformPlanReconciler struct {
 	PodClient corev1typed.PodsGetter
 }
 
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformlogs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformlogs/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=pods/status,verbs=get
-// +kubebuilder:rbac:groups=core,resources=pods/logs,verbs=get
-// +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans,verbs=*
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans/status,verbs=*
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformlogs,verbs=*
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformlogs/status,verbs=*
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=*
+// +kubebuilder:rbac:groups=core,resources=pods/status,verbs=*
+// +kubebuilder:rbac:groups=core,resources=pods/log,verbs=*
+// +kubebuilder:rbac:groups=core,resources=configmaps,verbs=*
 
 // Reconcile state
 func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {

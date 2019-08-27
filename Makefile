@@ -20,21 +20,23 @@ manager: generate build ## Generate code, build manager binary
 build: ## Build manager binary
 	go build -ldflags '$(GO_LDFLAGS)' -v -o bin/kubeterra .
 
-pack:
+pack: ## Pack binaries from ./bin with UPX
 	upx ./bin/*
 
 run: generate ## Run against the configured Kubernetes cluster in ~/.kube/config
 	go run *.go manager -d
 
-install: manifests ## Install CRDs into a cluster
+crd: manifests ## Generate and install CRDs into a cluster
 	kubectl apply -f config/crd/bases
 
 deploy: manifests ## Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-	kubectl apply -f config/crd/bases
 	kustomize build config/default | kubectl apply -f -
 
+renderdeploy: manifests ## Render static YAML
+	kustomize build config/default > bin/kubeterra-$(TAG).deploy.yaml
+
 manifests: ## Generate YAML manifests e.g. CRD, RBAC etc.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=kubeterra webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 lint: ## Run golangci-lint against code
 	golangci-lint run

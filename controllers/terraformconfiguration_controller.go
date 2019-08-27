@@ -42,12 +42,12 @@ type TerraformConfigurationReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformconfigurations,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformconfigurations/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformstates,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformstates/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformconfigurations,verbs=*
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformconfigurations/status,verbs=*
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans,verbs=*
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformplans/status,verbs=*
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformstates,verbs=*
+// +kubebuilder:rbac:groups=terraform.kubeterra.io,resources=terraformstates/status,verbs=*
 
 // SetupWithManager dependency inject controller
 func (r *TerraformConfigurationReconciler) SetupWithManager(mgr ctrl.Manager) error {
