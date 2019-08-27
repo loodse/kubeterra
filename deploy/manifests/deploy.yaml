@@ -3168,124 +3168,94 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: kubeterra-kubeterra
+  name: kubeterra-manager
 rules:
 - apiGroups:
   - ""
   resources:
   - configmaps
   verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - '*'
 - apiGroups:
   - ""
   resources:
   - pods
   verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - '*'
 - apiGroups:
   - ""
   resources:
-  - pods/logs
+  - pods/log
   verbs:
-  - get
+  - '*'
 - apiGroups:
   - ""
   resources:
   - pods/status
   verbs:
-  - get
+  - '*'
 - apiGroups:
   - terraform.kubeterra.io
   resources:
   - terraformconfigurations
   verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - '*'
 - apiGroups:
   - terraform.kubeterra.io
   resources:
   - terraformconfigurations/status
   verbs:
-  - get
-  - patch
-  - update
+  - '*'
 - apiGroups:
   - terraform.kubeterra.io
   resources:
   - terraformlogs
   verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - '*'
 - apiGroups:
   - terraform.kubeterra.io
   resources:
   - terraformlogs/status
   verbs:
-  - get
-  - patch
-  - update
+  - '*'
 - apiGroups:
   - terraform.kubeterra.io
   resources:
   - terraformplans
   verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - '*'
 - apiGroups:
   - terraform.kubeterra.io
   resources:
   - terraformplans/status
   verbs:
-  - get
-  - patch
-  - update
+  - '*'
 - apiGroups:
   - terraform.kubeterra.io
   resources:
   - terraformstates
   verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - '*'
 - apiGroups:
   - terraform.kubeterra.io
   resources:
   - terraformstates/status
   verbs:
-  - get
-  - patch
-  - update
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubeterra-binding
+  namespace: kubeterra-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeterra-manager
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: kubeterra-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -3296,19 +3266,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: kubeterra-leader-election-role
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: kubeterra-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: kubeterra-kubeterra-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: kubeterra-kubeterra
 subjects:
 - kind: ServiceAccount
   name: default
@@ -3337,7 +3294,7 @@ spec:
         - --enable-leader-election
         command:
         - /kubeterra
-        image: quay.io/loodse/kubeterra:v0.0.1-alpha3
+        image: quay.io/loodse/kubeterra:v0.1.0-alpha1
         name: manager
         resources:
           limits:
