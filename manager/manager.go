@@ -31,14 +31,23 @@ import (
 	"github.com/loodse/kubeterra/controllers"
 )
 
-func Launch(metricsAddr string, leaderElection bool, development bool) error {
+// Options to configure manager
+type Options struct {
+	MetricsAddr    string
+	LeaderElection bool
+	Development    bool
+	Namespace      string
+}
+
+// Launch manager
+func Launch(opts Options) error {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = terraformv1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 
 	setupLog := ctrl.Log.WithName("setup")
-	ctrl.SetLogger(zap.Logger(development))
+	ctrl.SetLogger(zap.Logger(opts.Development))
 
 	syncPeriod := 10 * time.Minute
 	mgr, err := ctrl.NewManager(
@@ -46,8 +55,9 @@ func Launch(metricsAddr string, leaderElection bool, development bool) error {
 		ctrl.Options{
 			SyncPeriod:         &syncPeriod,
 			Scheme:             scheme,
-			MetricsBindAddress: metricsAddr,
-			LeaderElection:     leaderElection,
+			MetricsBindAddress: opts.MetricsAddr,
+			LeaderElection:     opts.LeaderElection,
+			Namespace:          opts.Namespace,
 		},
 	)
 	if err != nil {

@@ -17,18 +17,22 @@ package command
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/loodse/kubeterra/manager"
 )
 
-type managerOpts struct {
-	GlobalOpts           `mapstructure:",squash"`
-	MetricsAddr          string `mapstructure:"metrics-addr"`
-	EnableLeaderElection bool   `mapstructure:"enable-leader-election"`
+type managerOptions struct {
+	globalOptions
+	Namespace            string
+	MetricsAddr          string
+	EnableLeaderElection bool
 }
 
-func managerCmd() *cobra.Command {
+func managerCmd(gopts globalOptions) *cobra.Command {
+	opts := managerOptions{
+		globalOptions: gopts,
+	}
+
 	cmd := &cobra.Command{
 		Use:   "manager",
 		Short: "controller manager",
@@ -39,25 +43,20 @@ Launch kubernetes controller manager that will watch and act over CRDs:
 * TerraformPlan
 * TerraformState
 		`,
-		RunE: runManager,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return manager.Launch(manager.Options{
+				MetricsAddr:    opts.MetricsAddr,
+				LeaderElection: opts.EnableLeaderElection,
+				Development:    opts.Debug,
+				Namespace:      opts.Namespace,
+			})
+		},
 	}
 
 	flags := cmd.Flags()
+	flags.StringVar(&opts.MetricsAddr, "metrics-addr", ":8080", "the address the metric endpoint binds to.")
+	flags.BoolVarP(&opts.EnableLeaderElection, "enable-leader-election", "l", false, "enable leader election for controller manager.")
+	flags.StringVar(&opts.Namespace, "namespace", "kubeterra-system", "namespace to watch over")
 
-	// flags declared here should be cosistent with managerOpts structure
-	flags.String("metrics-addr", ":8080", "the address the metric endpoint binds to.")
-	flags.BoolP("enable-leader-election", "l", false, "enable leader election for controller manager.")
-
-	_ = viper.BindPFlags(flags)
 	return cmd
-}
-
-func runManager(cmd *cobra.Command, _ []string) error {
-	var opts managerOpts
-
-	if err := viper.Unmarshal(&opts); err != nil {
-		return err
-	}
-
-	return manager.Launch(opts.MetricsAddr, opts.EnableLeaderElection, opts.Debug)
 }

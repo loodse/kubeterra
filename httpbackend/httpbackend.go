@@ -29,18 +29,26 @@ import (
 	terraformv1alpha1 "github.com/loodse/kubeterra/api/v1alpha1"
 )
 
-// ListenAndServe launch terraform http backend server
-func ListenAndServe(tfStateName, tfStateNamespace string, listen string, development bool) error {
-	ctrl.SetLogger(zap.Logger(development))
-	httpLog := ctrl.Log.WithName("http")
-	httpLog.Info("starting", "port", listen, "state-name", tfStateName)
+// Options to configure terraform http backend
+type Options struct {
+	TerraformStateName      string
+	TerraformStateNamespace string
+	Listen                  string
+	Development             bool
+}
 
-	mux, err := newHTTPBackendMux(tfStateName, tfStateNamespace, httpLog)
+// ListenAndServe launch terraform http backend server
+func ListenAndServe(opts Options) error {
+	ctrl.SetLogger(zap.Logger(opts.Development))
+	httpLog := ctrl.Log.WithName("http")
+	httpLog.Info("starting", "port", opts.Listen, "state-name", opts.TerraformStateName)
+
+	mux, err := newHTTPBackendMux(opts.TerraformStateName, opts.TerraformStateNamespace, httpLog)
 	if err != nil {
 		return err
 	}
 
-	return http.ListenAndServe(listen, mux)
+	return http.ListenAndServe(opts.Listen, mux)
 }
 
 func newHTTPBackendMux(name, namespace string, httpLog logr.Logger) (*http.ServeMux, error) {

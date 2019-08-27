@@ -17,19 +17,22 @@ package command
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/loodse/kubeterra/httpbackend"
 )
 
-type backendOpts struct {
-	GlobalOpts `mapstructure:",squash"`
-	Name       string `mapstructure:"name"`
-	Namespace  string `mapstructure:"namespace"`
-	Listen     string `mapstructure:"listen"`
+type backendOptions struct {
+	globalOptions
+	Name      string
+	Namespace string
+	Listen    string
 }
 
-func backendCmd() *cobra.Command {
+func backendCmd(gopts globalOptions) *cobra.Command {
+	opts := backendOptions{
+		globalOptions: gopts,
+	}
+
 	cmd := &cobra.Command{
 		Use:   "backend",
 		Args:  cobra.NoArgs,
@@ -38,30 +41,24 @@ func backendCmd() *cobra.Command {
 This process is used as side-car to running terraform http backend. It will
 proxy terraform state to TerraformState object.
 		`,
-		RunE: runBackend,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return httpbackend.ListenAndServe(httpbackend.Options{
+				TerraformStateName:      opts.Name,
+				TerraformStateNamespace: opts.Namespace,
+				Listen:                  opts.Listen,
+				Development:             opts.Debug,
+			})
+		},
 	}
 
 	flags := cmd.Flags()
 
 	// flags declared here should be cosistent with backendOpts structure
-	flags.StringP("name", "n", "", "name of the terraform state object to use")
-	flags.StringP("namespace", "s", "", "name of the namespace where terraform state object is located")
-	flags.StringP("listen", "l", "localhost:8081", "listen port")
+	flags.StringVarP(&opts.Name, "name", "n", "", "name of the terraform state object to use")
+	flags.StringVarP(&opts.Namespace, "namespace", "s", "", "name of the namespace where terraform state object is located")
+	flags.StringVarP(&opts.Listen, "listen", "l", "localhost:8081", "listen port")
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("namespace")
 
-	if err := viper.BindPFlags(flags); err != nil {
-		panic(err)
-	}
 	return cmd
-}
-
-func runBackend(_ *cobra.Command, args []string) error {
-	var opts backendOpts
-
-	if err := viper.Unmarshal(&opts); err != nil {
-		return err
-	}
-
-	return httpbackend.ListenAndServe(opts.Name, opts.Namespace, opts.Listen, opts.Debug)
 }

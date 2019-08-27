@@ -20,14 +20,13 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-// GlobalOpts is a struct to embedd to other "opts" structures for
+// globalOptions is a struct to embedd to other "opts" structures for
 // viper.Unmarshal
-type GlobalOpts struct {
-	Verbose bool `mapstructure:"verbose"`
-	Debug   bool `mapstructure:"debug"`
+type globalOptions struct {
+	Verbose bool
+	Debug   bool
 }
 
 // Execute is the root command entry function
@@ -52,19 +51,16 @@ Terraform controllers manager
 		},
 	}
 
+	gopts := globalOptions{}
 	flags := cmd.PersistentFlags()
 
 	// flags declared here should be cosistent with rootOpts structure
-	flags.BoolP("verbose", "v", false, "verbose output")
-	flags.BoolP("debug", "d", false, "development mode")
-
-	if err := viper.BindPFlags(flags); err != nil {
-		panic(err)
-	}
+	flags.BoolVarP(&gopts.Verbose, "verbose", "v", false, "verbose output")
+	flags.BoolVarP(&gopts.Debug, "debug", "d", false, "development mode")
 
 	cmd.AddCommand(
-		managerCmd(),
-		backendCmd(),
+		managerCmd(gopts),
+		backendCmd(gopts),
 	)
 
 	return cmd
