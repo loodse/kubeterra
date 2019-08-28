@@ -1,7 +1,7 @@
 apiVersion: terraform.kubeterra.io/v1alpha1
 kind: TerraformConfiguration
 metadata:
-  name: sample2
+  name: kubeone-on-hetzner
   namespace: kubeterra-system
 spec:
   autoApprove: true
