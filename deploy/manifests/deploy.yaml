@@ -3294,7 +3294,7 @@ spec:
         - --enable-leader-election
         command:
         - /kubeterra
-        image: quay.io/loodse/kubeterra:v0.1.0-alpha1
+        image: quay.io/loodse/kubeterra:v0.1.0-alpha3
         name: manager
         resources:
           limits:
