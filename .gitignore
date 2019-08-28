@@ -13,6 +13,8 @@ bin
 *.swo
 *~
 
+.DS_Store
+
 # we use gomods and go mod vendor
 /vendor
 /tmp
