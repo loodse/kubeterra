@@ -33,7 +33,7 @@ RUN upx ./bin/*
 FROM alpine:latest
 
 WORKDIR /
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates git
 COPY --from=packer /workspace/bin/kubeterra .
 COPY --from=packer /workspace/bin/terraform /usr/local/bin/
 USER 65534:65534
