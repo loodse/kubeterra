@@ -22,13 +22,13 @@ import (
 )
 
 type managerOptions struct {
-	globalOptions
+	*globalOptions
 	Namespace            string
 	MetricsAddr          string
 	EnableLeaderElection bool
 }
 
-func managerCmd(gopts globalOptions) *cobra.Command {
+func managerCmd(gopts *globalOptions) *cobra.Command {
 	opts := managerOptions{
 		globalOptions: gopts,
 	}

@@ -22,13 +22,13 @@ import (
 )
 
 type backendOptions struct {
-	globalOptions
+	*globalOptions
 	Name      string
 	Namespace string
 	Listen    string
 }
 
-func backendCmd(gopts globalOptions) *cobra.Command {
+func backendCmd(gopts *globalOptions) *cobra.Command {
 	opts := backendOptions{
 		globalOptions: gopts,
 	}

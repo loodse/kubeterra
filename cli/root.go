@@ -59,8 +59,8 @@ Terraform controllers manager
 	flags.BoolVarP(&gopts.Debug, "debug", "d", false, "development mode")
 
 	cmd.AddCommand(
-		managerCmd(gopts),
-		backendCmd(gopts),
+		managerCmd(&gopts),
+		backendCmd(&gopts),
 	)
 
 	return cmd
