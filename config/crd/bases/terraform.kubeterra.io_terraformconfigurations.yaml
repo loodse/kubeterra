@@ -47,6 +47,10 @@ spec:
             configuration:
               description: Configuration holds whole terraform configuration definition
               type: string
+            forceTrigger:
+              description: ForceTrigger Is a way to trigger new terraform run, simply
+                update it with any random data
+              type: string
             paused:
               description: Indicates that the terraform apply should not happened.
               type: boolean

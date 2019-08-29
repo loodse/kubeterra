@@ -75,6 +75,11 @@ type TerraformConfigurationSpec struct {
 	// +optional
 	Paused bool `json:"paused"`
 
+	// ForceTrigger Is a way to trigger new terraform run, simply update it with
+	// any random data
+	// +optional
+	ForceTrigger string `json:"forceTrigger,omitempty"`
+
 	// Indicates that the terrafor apply should happen without any further question.
 	// +optional
 	AutoApprove bool `json:"autoApprove"`

@@ -202,6 +202,7 @@ func (r *TerraformConfigurationReconciler) generateTerraformPlan(
 	plan.Spec.Configuration = config.Spec.Configuration
 	plan.Spec.Values = config.Spec.Values
 	plan.Spec.Template = config.Spec.Template.DeepCopy()
+	plan.Spec.ForceTrigger = config.Spec.ForceTrigger
 	plan.Status.Phase = terraformv1alpha1.TerraformPhasePlanScheduled
 
 	if err := ctrl.SetControllerReference(config, plan, r.Scheme); err != nil {
