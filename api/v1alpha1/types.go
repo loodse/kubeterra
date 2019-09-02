@@ -22,17 +22,18 @@ import (
 )
 
 // TerraformPhase phase
-// +kubebuilder:validation:Enum=PlanScheduled;PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
+// +kubebuilder:validation:Enum=PlanScheduled;PlanRunning;WaitingApproval;ApplyRunning;PlanFailed;ApplyFailed;Done
 type TerraformPhase string
 
 // TerraformPhase ENUM
 const (
-	TerraformPhasePlanScheduled       TerraformPhase = "PlanScheduled"
-	TerraformPhasePlanRunning         TerraformPhase = "PlanRunning"
-	TerraformPhaseWaitingConfirmation TerraformPhase = "WaitingConfirmation"
-	TerraformPhaseApplyRunning        TerraformPhase = "ApplyRunning"
-	TerraformPhaseDone                TerraformPhase = "Done"
-	TerraformPhaseFail                TerraformPhase = "Fail"
+	TerraformPhasePlanScheduled   TerraformPhase = "PlanScheduled"
+	TerraformPhasePlanRunning     TerraformPhase = "PlanRunning"
+	TerraformPhaseWaitingApproval TerraformPhase = "WaitingApproval"
+	TerraformPhaseApplyRunning    TerraformPhase = "ApplyRunning"
+	TerraformPhasePlanFailed      TerraformPhase = "PlanFailed"
+	TerraformPhaseApplyFailed     TerraformPhase = "ApplyFailed"
+	TerraformPhaseDone            TerraformPhase = "Done"
 )
 
 // TerraformConfigurationTemplate defines some aspects of resulting Pod that will run terraform plan / teterraform apply
@@ -75,10 +76,9 @@ type TerraformConfigurationSpec struct {
 	// +optional
 	Paused bool `json:"paused"`
 
-	// ForceTrigger Is a way to trigger new terraform run, simply update it with
-	// any random data
+	// Rerun this configuration periodically
 	// +optional
-	ForceTrigger string `json:"forceTrigger,omitempty"`
+	RepeatEvery *metav1.Duration `json:"repeatEvery,omitempty"`
 
 	// Indicates that the terrafor apply should happen without any further question.
 	// +optional
@@ -99,7 +99,7 @@ type TerraformConfigurationSpec struct {
 // TerraformConfigurationStatus defines the observed state of TerraformConfiguration
 type TerraformConfigurationStatus struct {
 	// Phase indicates current phase of the terraform action.
-	// Is a enum PlanScheduled;PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
+	// Is a enum PlanScheduled;PlanRunning;WaitingApproval;ApplyRunning;PlanFailed;ApplyFailed;Done
 	Phase TerraformPhase `json:"phase"`
 }
 
@@ -128,39 +128,26 @@ type TerraformConfigurationList struct {
 
 // TerraformPlanSpec defines the desired state of TerraformPlan
 type TerraformPlanSpec struct {
-	// ForceTrigger Is a way to trigger new terraform run, simply update it with
-	// any random data
-	// +optional
-	ForceTrigger string `json:"forceTrigger,omitempty"`
-
 	// Indicate if plan approved to apply
 	Approved bool `json:"approved"`
 
-	// Configuration holds whole terraform configuration definition
-	Configuration string `json:"configuration"`
-
-	// Variable values, will be dumped to terraform.tfvars
+	// Scheduled next execution time
 	// +optional
-	Values string `json:"values,omitempty"`
-
-	// Defines some aspects of resulting Pod that will run terraform plan / teterraform apply
-	// +optional
-	Template *TerraformConfigurationTemplate `json:"template,omitempty"`
+	NextRunAt *metav1.Time `json:"nextRunAt,omitempty"`
 }
 
 // TerraformPlanStatus defines the observed state of TerraformPlan
 type TerraformPlanStatus struct {
-	// Base64 encoded contents of the `terraform plan -out`
+	// Previous execution time
 	// +optional
-	GeneratedPlan []byte `json:"generatedPlan,omitempty"`
+	LastRunAt *metav1.Time `json:"lastRunAt,omitempty"`
 
-	// String encoded 32-bit FNV-1a hash of the TerraformPlanSpec.
+	// String encoded 32-bit FNV-1a hash of the TerraformConfigurationSpec.
 	// Encoded with https://godoc.org/k8s.io/apimachinery/pkg/util/rand#SafeEncodeString
-	// +optional
-	SpecHash string `json:"specHash,omitempty"`
+	ConfigurationSpecHash string `json:"configurationSpecHash"`
 
-	// Phase indicates current phase of the terraform action.
-	// Is a enum PlanScheduled;PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
+	// Current phase
+	// Is a enum PlanScheduled;PlanRunning;WaitingApproval;ApplyRunning;PlanFailed;ApplyFailed;Done
 	Phase TerraformPhase `json:"phase"`
 }
 
@@ -168,7 +155,7 @@ type TerraformPlanStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=tfplan;tfplans
 // +kubebuilder:printcolumn:name="Approved",type=string,JSONPath=`.spec.approved`
-// +kubebuilder:printcolumn:name="Spec Hash",type=string,JSONPath=`.status.specHash`
+// +kubebuilder:printcolumn:name="Spec Hash",type=string,JSONPath=`.status.configurationSpecHash`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 
 // TerraformPlan is the Schema for the terraformplans API
@@ -229,38 +216,6 @@ type TerraformStateList struct {
 	Items           []TerraformState `json:"items"`
 }
 
-// TerraformLogSpec defines the desired state of TerraformLog
-type TerraformLogSpec struct {
-	// Contain logs output
-	// +optional
-	Log string `json:"log,omitempty"`
-}
-
-// TerraformLogStatus defines the observed state of TerraformLog
-type TerraformLogStatus struct{}
-
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=tflog;tflogs
-
-// TerraformLog is the Schema for the terraformlogs API
-type TerraformLog struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   TerraformLogSpec   `json:"spec,omitempty"`
-	Status TerraformLogStatus `json:"status,omitempty"`
-}
-
-// +kubebuilder:object:root=true
-
-// TerraformLogList contains a list of TerraformLog
-type TerraformLogList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []TerraformLog `json:"items"`
-}
-
 func init() {
 	SchemeBuilder.Register(
 		&TerraformConfiguration{},
@@ -269,7 +224,5 @@ func init() {
 		&TerraformPlanList{},
 		&TerraformState{},
 		&TerraformStateList{},
-		&TerraformLog{},
-		&TerraformLogList{},
 	)
 }

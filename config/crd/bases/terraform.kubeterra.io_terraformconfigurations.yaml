@@ -47,13 +47,12 @@ spec:
             configuration:
               description: Configuration holds whole terraform configuration definition
               type: string
-            forceTrigger:
-              description: ForceTrigger Is a way to trigger new terraform run, simply
-                update it with any random data
-              type: string
             paused:
               description: Indicates that the terraform apply should not happened.
               type: boolean
+            repeatEvery:
+              description: Rerun this configuration periodically
+              type: string
             template:
               description: Defines some aspects of resulting Pod that will run terraform
                 plan / teterraform apply
@@ -1476,14 +1475,15 @@ spec:
           properties:
             phase:
               description: Phase indicates current phase of the terraform action.
-                Is a enum PlanScheduled;PlanRunning;WaitingConfirmation;ApplyRunning;Done;Fail
+                Is a enum PlanScheduled;PlanRunning;WaitingApproval;ApplyRunning;PlanFailed;ApplyFailed;Done
               enum:
               - PlanScheduled
               - PlanRunning
-              - WaitingConfirmation
+              - WaitingApproval
               - ApplyRunning
+              - PlanFailed
+              - ApplyFailed
               - Done
-              - Fail
               type: string
           required:
           - phase

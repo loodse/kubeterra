@@ -45,18 +45,6 @@ rules:
 - apiGroups:
   - terraform.kubeterra.io
   resources:
-  - terraformlogs
-  verbs:
-  - '*'
-- apiGroups:
-  - terraform.kubeterra.io
-  resources:
-  - terraformlogs/status
-  verbs:
-  - '*'
-- apiGroups:
-  - terraform.kubeterra.io
-  resources:
   - terraformplans
   verbs:
   - '*'
