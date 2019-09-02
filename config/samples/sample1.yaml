@@ -7,6 +7,13 @@ spec:
   autoApprove: true
   repeatEvery: 10m
   configuration: |
+    terraform {
+      backend "http" {
+        address        = "http://localhost:8081/"
+        lock_address   = "http://localhost:8081/"
+        unlock_address = "http://localhost:8081/"
+      }
+    }
     resource "random_id" "server" {
       byte_length = 4
     }

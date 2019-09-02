@@ -27,6 +27,14 @@ spec:
     ssh_public_key_file  = "/secrets/id_rsa.pub"
 
   configuration: |
+    terraform {
+      backend "http" {
+        address        = "http://localhost:8081/"
+        lock_address   = "http://localhost:8081/"
+        unlock_address = "http://localhost:8081/"
+      }
+    }
+
     variable "cluster_name" {
       description = "Name of the cluster"
     }
