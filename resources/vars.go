@@ -16,5 +16,5 @@ limitations under the License.
 package resources
 
 var (
-	Image = "kubermatic/kubeterra:dev"
+	Image = "quay.io/loodse/kubeterra:dev"
 )
