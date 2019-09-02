@@ -5,6 +5,7 @@ metadata:
   namespace: kubeterra-system
 spec:
   autoApprove: true
+  repeatEvery: 30m
   template:
     # for debug purposes uncomment the following
     # env:

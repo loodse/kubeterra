@@ -5,6 +5,7 @@ metadata:
   namespace: kubeterra-system
 spec:
   autoApprove: true
+  repeatEvery: 10m
   configuration: |
     resource "random_id" "server" {
       byte_length = 4
