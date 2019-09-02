@@ -16,9 +16,17 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
+	"fmt"
+	"hash/fnv"
+
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/rand"
+	khash "k8s.io/kubernetes/pkg/util/hash"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -80,4 +88,33 @@ func indexerFunc(ownerKind, ownerAPIGV string) func(runtime.Object) []string {
 
 		return []string{owner.Name}
 	}
+}
+
+func deepHashObject(obj interface{}) string {
+	hasher := fnv.New32a()
+	khash.DeepHashObject(hasher, obj)
+	return rand.SafeEncodeString(fmt.Sprint(hasher.Sum32()))
+}
+
+var noopGenerator = func() error { return nil }
+
+// findOrCreate tries to `client.Get` object, in case if it's absent —
+// initialize new object with `generator` and `client.Create` it
+func findOrCreate(ctx context.Context, cli client.Client, obj runtime.Object, generator func() error) (bool, error) {
+	var created bool
+
+	key, err := client.ObjectKeyFromObject(obj)
+	if err != nil {
+		return created, err
+	}
+
+	err = cli.Get(ctx, key, obj)
+	if apierrors.IsNotFound(err) {
+		if err = generator(); err != nil {
+			return created, err
+		}
+		created = true
+		return created, cli.Create(ctx, obj)
+	}
+	return created, err
 }
