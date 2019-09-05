@@ -22,5 +22,5 @@ require (
 	k8s.io/kubernetes v1.14.1
 	k8s.io/utils v0.0.0-20190809000727-6c36bc71fc4a
 	sigs.k8s.io/controller-runtime v0.2.0
-	sigs.k8s.io/controller-tools v0.2.0
+	sigs.k8s.io/controller-tools v0.2.1
 )

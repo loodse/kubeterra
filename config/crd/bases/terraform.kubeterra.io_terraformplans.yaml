@@ -19,10 +19,12 @@ spec:
   group: terraform.kubeterra.io
   names:
     kind: TerraformPlan
+    listKind: TerraformPlanList
     plural: terraformplans
     shortNames:
     - tfplan
     - tfplans
+    singular: terraformplan
   scope: Namespaced
   subresources:
     status: {}

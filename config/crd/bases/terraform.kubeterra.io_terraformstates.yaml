@@ -9,10 +9,12 @@ spec:
   group: terraform.kubeterra.io
   names:
     kind: TerraformState
+    listKind: TerraformStateList
     plural: terraformstates
     shortNames:
     - tfstate
     - tfstates
+    singular: terraformstate
   scope: Namespaced
   subresources:
     status: {}

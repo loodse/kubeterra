@@ -13,10 +13,12 @@ spec:
   group: terraform.kubeterra.io
   names:
     kind: TerraformConfiguration
+    listKind: TerraformConfigurationList
     plural: terraformconfigurations
     shortNames:
     - tfconfig
     - tfconfigs
+    singular: terraformconfiguration
   scope: Namespaced
   subresources:
     status: {}
