@@ -18,7 +18,7 @@ test: generate manifests ## Run tests
 manager: generate build ## Generate code, build manager binary
 
 build: ## Build manager binary
-	go build -ldflags '$(GO_LDFLAGS)' -v -o bin/kubeterra .
+	go build -trimpath -ldflags '$(GO_LDFLAGS)' -v -o bin/kubeterra .
 
 pack: ## Pack binaries from ./bin with UPX
 	upx ./bin/*
