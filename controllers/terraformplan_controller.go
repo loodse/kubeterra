@@ -16,10 +16,8 @@ limitations under the License.
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -72,7 +70,7 @@ func (r *TerraformPlanReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=*
 
 // Reconcile state
-func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *TerraformPlanReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) { //nolint:gocyclo
 	ctx := context.Background()
 	log := r.Log.WithValues("terraformplan", req.NamespacedName)
 	errLogMsg := logError(log)
@@ -377,37 +375,37 @@ func generateConfigMap(tfconfig *terapi.TerraformConfiguration, tfplan *terapi.T
 	}
 }
 
-func (r *TerraformPlanReconciler) generateTerraformLog(tfplan *terapi.TerraformPlan, pod corev1.Pod) (*corev1.ConfigMap, error) {
-	sinceForever := metav1.Unix(1, 0)
-	logsReq := r.PodClient.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
-		Container: "terraform",
-		SinceTime: &sinceForever,
-	})
+// func (r *TerraformPlanReconciler) generateTerraformLog(tfplan *terapi.TerraformPlan, pod corev1.Pod) (*corev1.ConfigMap, error) {
+// 	sinceForever := metav1.Unix(1, 0)
+// 	logsReq := r.PodClient.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
+// 		Container: "terraform",
+// 		SinceTime: &sinceForever,
+// 	})
 
-	terraformLogs, err := logsReq.Stream()
-	if err != nil {
-		return nil, err
-	}
-	defer terraformLogs.Close()
+// 	terraformLogs, err := logsReq.Stream()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer terraformLogs.Close()
 
-	var buf bytes.Buffer
-	_, err = io.Copy(&buf, terraformLogs)
-	if err != nil {
-		return nil, err
-	}
+// 	var buf bytes.Buffer
+// 	_, err = io.Copy(&buf, terraformLogs)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	tflog := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      hashedName(tfplan),
-			Namespace: tfplan.Namespace,
-		},
-		Data: map[string]string{
-			"logs": buf.String(),
-		},
-	}
+// 	tflog := &corev1.ConfigMap{
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name:      hashedName(tfplan),
+// 			Namespace: tfplan.Namespace,
+// 		},
+// 		Data: map[string]string{
+// 			"logs": buf.String(),
+// 		},
+// 	}
 
-	return tflog, ctrl.SetControllerReference(tfplan, tflog, r.Scheme)
-}
+// 	return tflog, ctrl.SetControllerReference(tfplan, tflog, r.Scheme)
+// }
 
 func hashedName(tfplan *terapi.TerraformPlan) string {
 	return fmt.Sprintf("%s-%s", tfplan.Name, tfplan.Status.ConfigurationSpecHash)

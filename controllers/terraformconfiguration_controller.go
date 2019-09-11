@@ -138,8 +138,8 @@ func (r *TerraformConfigurationReconciler) Reconcile(req ctrl.Request) (ctrl.Res
 
 	if tfconfig.Status.Phase != tfplan.Status.Phase {
 		log.Info("TerraformConfiguration.Status update")
-		if err := r.Status().Update(ctx, &tfconfig); err != nil {
-			return ctrl.Result{}, errLogMsg(err, "unable to update TerraformConfiguration.Status")
+		if statusErr := r.Status().Update(ctx, &tfconfig); statusErr != nil {
+			return ctrl.Result{}, errLogMsg(statusErr, "unable to update TerraformConfiguration.Status")
 		}
 	}
 
