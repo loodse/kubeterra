@@ -1,7 +1,7 @@
-// +build tools
-
 /*
-Copyright 2019 The KubeTerra Authors.
+Copyright YEAR The XXX Authors.
+
+fail
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +16,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package tools
-
-import (
-	_ "sigs.k8s.io/controller-tools/cmd/controller-gen"
-)
+package test
