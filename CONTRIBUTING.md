@@ -12,7 +12,7 @@ By contributing to this project you agree to the Developer Certificate of Origin
 statement that you, as a contributor, have the legal right to make the
 contribution. See the [DCO](DCO) file for details.
 
-Any copyright notices in this repo should specify the authors as "the Loodse XXX
+Any copyright notices in this repo should specify the authors as "the KubeTerra
 project contributors".
 
 To sign your work, just add a line like this at the end of your commit message:
@@ -28,7 +28,7 @@ https://developercertificate.org/):
 
 ## Email and Chat
 
-The XXX project currently uses the general Loodse email list and Slack channel:
+The KubeTerra project currently uses the general Loodse email list and Slack channel:
 - Email: [loodse-dev](https://groups.google.com/forum/#!forum/loodse-dev)
 - Slack: #[Slack](http://slack.kubermatic.io/) on Slack
 
