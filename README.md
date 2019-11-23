@@ -11,113 +11,52 @@ modules.
 Kubeterra itself is a controller manager that run on kubernetes and operating on
 CustomResources.
 
-### API Stability
-API domain: kubeterra.io
-API Group: terraform
-Latest API Version: v1alpha1
+## Installation
 
-Current API version `terraform.kubeterra.io/v1alpha1` is considered an alpha
-version and most likely will be changed.
+We strongly recommend that you use an [official release][3] of kubeterra. The tarballs for each release contain the
+command-line client **and** version-specific sample YAML files for deploying kubeterra to your cluster.
+Follow the instructions under the **Install** section of [our documentation][21] to get started.
 
-## Architecture
+_The code and sample YAML files in the master branch of the kubeterra repository are under active development and are not guaranteed to be stable. Use them at your own risk!_
 
-`terraform.kubeterra.io/v1alpha1` defines following objects.
-* `TerraformConfiguration` — Defines terraform configuration source (read
-  `main.tf`), including all variables, resources, locals and outputs. In
-  addition contains references to ENV variables, secrets and volumes to mount
-  that are needed in order to successfully run terraform apply.
-* `TerraformState` — Contains terraform state translated here over kubeterra
-  remove http backend.
-* `TerraformPlan` — Contains snapshot of `TerraformConfiguration` that will be
-  planned or applied.
-* `TerraformLog` - Contains logs of terraform container after running
-  `TerraformPlan`.
+## More information
 
->Note: Users of kubeterra only need to create `TerraformConfiguration`, other
-objects will be created by controller manager.
+[The documentation][21] provides a getting started guide, plus information about building from source, architecture, extending kubeterra, and more.
 
-The intended workflow sequence looks like this:
-* Actor creates `TerraformConfiguration`
-* Kubeterra in response creates a pod with `terraform plan` or `terraform apply`
-  container.
-* Terraform container has possible configurations such as terraform config
-  itself, volumes, environments variables, etc are mounted to this container.
-* Kubeterra automatically run a sidecar container that provides [terraform http
-  backend API](https://www.terraform.io/docs/backends/types/http.html), that's
-  able to "proxy" terraform state back to cluster in `TerraformState` form.
-* In addition to normal `main.tf` file (created from definition configured in
-  TerraformConfiguration), `httpbackend.tf` is generated that will automatically
-  instruct terraform to use httpbacked and point it towards "httpbackend"
-  sidecar (this most likely will change, see issue #14).
-* Once terraform container is finished, the whole pod is being removed, logs are
-  saved.
+Please use the version selector at the top of the site to ensure you are using the appropriate documentation for your version of kubeterra.
 
-## Deploy
+## Troubleshooting
 
-Up to date release manifests in form of static YAML (that includes CRDs and RBAC
-rules) are located in
-[deploy/manifests/deploy.yaml](deploy/manifests/deploy.yaml).
+If you encounter issues [file an issue][1] or talk to us on the [#kubeterra channel][12] on the [loodse Slack][15].
 
-Per release manifests can be found at
-[releases](https://github.com/loodse/kubeterra/releases) in `Assets` attached to
-every release.
+## Contributing
 
-## Usage
+Thanks for taking the time to join our community and start contributing!
 
-Standard deployment manifest defines RBAC rules only for `kubeterra-system`
-namespace. All objects should be created there.
+Feedback and discussion are available on [the mailing list][11].
 
-### Types shortcuts
+### Before you start
 
-For every defined type there a shortcut:
-* `TerraformConfiguration` — `tfconfig`
-* `TerraformState` — `tfstate`
-* `TerraformPlan` — `tfplan`
-* `TerraformLog` — `tflog`
+* Please familiarize yourself with the [Code of Conduct][4] before contributing.
+* See [CONTRIBUTING.md][2] for instructions on the developer certificate of origin that we require.
+* Read how [we're using ZenHub][13] for project and roadmap planning
 
-So you can type something like
+### Pull requests
 
-```shell
-kubectl get tfconfig
-```
+* We welcome pull requests. Feel free to dig through the [issues][1] and jump in.
 
-### Simples example:
+## Changelog
 
-```yaml
-apiVersion: terraform.kubeterra.io/v1alpha1
-kind: TerraformConfiguration
-metadata:
-  name: random1
-  namespace: kubeterra-system
-spec:
-  autoApprove: true
-  configuration: |
-    resource "random_id" "rand" {
-      byte_length = 4
-    }
-```
+See [the list of releases][3] to find out about feature changes.
 
-Once this object is created kubeterra will terraform apply it and state will be
-saved into random1 `TerraformState` object.
+[1]: https://github.com/loodse/kubeterra/issues
+[2]: https://github.com/loodse/kubeterra/blob/master/CONTRIBUTING.md
+[3]: https://github.com/loodse/kubeterra/releases
+[4]: https://github.com/loodse/kubeterra/blob/master/CODE_OF_CONDUCT.md
 
-To pull state locally:
+[11]: https://groups.google.com/forum/#!forum/projectkubeterra
+[12]: https://loodse.slack.com/messages/kubeterra
+[13]: https://github.com/loodse/kubeterra/blob/master/Zenhub.md
+[15]: http://slack.loodse.io/
 
-```shell
-kubectl get tfstate random1 -ojson | jq '.spec.state'
-```
-
-To pull only outputs locally:
-
-```shell
-kubectl get tfstate random1 -ojson | jq '.spec.state.outputs'
-```
-
-More advanced example is defined in [/config/samples/kubeone](https://github.com/loodse/kubeterra/tree/master/config/samples/kubeone)
-
-See also: [TerraformConfigurationSpec API definition](https://github.com/loodse/kubeterra/blob/79ecb7c955255592172fb93a372db25c1e4fa7a6/api/v1alpha1/types.go#L73)
-
-## Caveats & Limitations
-
-* For RBAC reason currently by default `TerraformConfiguration` are limited to
-  `kubeterra-system` namespace.
-* `terraform destroy` is currently not supported (see issue #15).
+[21]: https://github.com/loodse/kubeterra/tree/master/docs
