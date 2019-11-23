@@ -30,7 +30,7 @@ https://developercertificate.org/):
 
 The KubeTerra project currently uses the general Loodse email list and Slack channel:
 - Email: [loodse-dev](https://groups.google.com/forum/#!forum/loodse-dev)
-- Slack: #[Slack](http://slack.kubermatic.io/) on Slack
+- Slack: #[kubeterra](http://slack.kubermatic.io/) on Slack
 
 Please avoid emailing maintainers found in the MAINTAINERS file directly. They
 are very busy and read the mailing lists.
