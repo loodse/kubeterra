@@ -1,5 +1,9 @@
 # Architecture
 
+
+![alt text](KubeTerra.svg "KubeTerra Architecture")
+
+
 `terraform.kubeterra.io/v1alpha1` defines following objects.
 * `TerraformConfiguration` — Defines terraform configuration source (read
   `main.tf`), including all variables, resources, locals and outputs. In
