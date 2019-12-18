@@ -1,20 +1,15 @@
-# kubeterra
-Simple Kubernetes Terraform integration - Manage your Terraform environment with
-Kubernetes!
+# KubeTerra
+K8s operator for Terraform - Manage your Terraform environment with Kubernetes!
 
 ## About & Motivation
 
-Kubeterra was created out of necessity for automation of managing cloud
-resources in on-demand manner, where configurations are defined as terraform
-modules.
-
-Kubeterra itself is a controller manager that run on kubernetes and operating on
-CustomResources.
+KubeTerra allows to manage Terraform resources and modules with Kubernetes in a cloud native way. Kubeterra itself is a controller manager that run on kubernetes and operating on CustomResources. 
+The controller is built in a generic way and support out of the box the most common Terraform provider. 
 
 ## Installation
 
 We strongly recommend that you use an [official release][3] of kubeterra. The tarballs for each release contain the
-command-line client **and** version-specific sample YAML files for deploying kubeterra to your cluster.
+sample YAML files for deploying kubeterra to your cluster.
 Follow the instructions under the **Install** section of [our documentation][21] to get started.
 
 _The code and sample YAML files in the master branch of the kubeterra repository are under active development and are not guaranteed to be stable. Use them at your own risk!_
@@ -59,4 +54,4 @@ See [the list of releases][3] to find out about feature changes.
 [13]: https://github.com/loodse/kubeterra/blob/master/Zenhub.md
 [15]: http://slack.loodse.io/
 
-[21]: https://github.com/loodse/kubeterra/tree/master/docs
+[21]: https://github.com/loodse/kubeterra/blob/master/docs
